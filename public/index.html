@@ -76,39 +76,6 @@
             />
           </div>
           <div class="mb-4">
-            <label class="block text-gray-700">Имя пользователя</label>
-            <input
-              type="text"
-              id="register-username"
-              class="w-full p-2 border rounded"
-              required
-            />
-          </div>
-          <div class="mb-4">
-            <label class="block text-gray-700">Имя</label>
-            <input
-              type="text"
-              id="register-firstName"
-              class="w-full p-2 border rounded"
-            />
-          </div>
-          <div class="mb-4">
-            <label class="block text-gray-700">Фамилия</label>
-            <input
-              type="text"
-              id="register-lastName"
-              class="w-full p-2 border rounded"
-            />
-          </div>
-          <div class="mb-4">
-            <label class="block text-gray-700">Отчество</label>
-            <input
-              type="text"
-              id="register-middleName"
-              class="w-full p-2 border rounded"
-            />
-          </div>
-          <div class="mb-4">
             <label class="block text-gray-700">Пароль</label>
             <input
               type="password"
@@ -145,6 +112,49 @@
           <p id="profile-firstName" class="text-gray-600"></p>
           <p id="profile-lastName" class="text-gray-600"></p>
           <p id="profile-middleName" class="text-gray-600"></p>
+          
+          <!-- Profile Edit Form -->
+          <form id="profile-edit" class="mt-6">
+            <div class="mb-4">
+              <label class="block text-gray-700">Имя пользователя</label>
+              <input
+                type="text"
+                id="edit-username"
+                class="w-full p-2 border rounded"
+              />
+            </div>
+            <div class="mb-4">
+              <label class="block text-gray-700">Имя</label>
+              <input
+                type="text"
+                id="edit-firstName"
+                class="w-full p-2 border rounded"
+              />
+            </div>
+            <div class="mb-4">
+              <label class="block text-gray-700">Фамилия</label>
+              <input
+                type="text"
+                id="edit-lastName"
+                class="w-full p-2 border rounded"
+              />
+            </div>
+            <div class="mb-4">
+              <label class="block text-gray-700">Отчество</label>
+              <input
+                type="text"
+                id="edit-middleName"
+                class="w-full p-2 border rounded"
+              />
+            </div>
+            <button
+              type="submit"
+              class="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600 transition"
+            >
+              Сохранить изменения
+            </button>
+          </form>
+          
           <button
             id="logout"
             class="mt-4 bg-red-500 text-white p-2 rounded hover:bg-red-600 transition"

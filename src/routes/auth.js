@@ -13,14 +13,11 @@ const isValidEmail = (email) => {
 // Register
 router.post("/register", async (req, res) => {
   try {
-    const { email, username, password, firstName, lastName, middleName } =
-      req.body;
+    const { email, password } = req.body;
 
     // Backend validation
-    if (!email || !username || !password) {
-      return res
-        .status(400)
-        .json({ error: "Все обязательные поля должны быть заполнены" });
+    if (!email || !password) {
+      return res.status(400).json({ error: "Email и пароль обязательны" });
     }
     if (!isValidEmail(email)) {
       return res.status(400).json({ error: "Некорректный формат email" });
@@ -30,30 +27,20 @@ router.post("/register", async (req, res) => {
         .status(400)
         .json({ error: "Пароль должен быть не короче 6 символов" });
     }
-    if (username.length < 3) {
-      return res
-        .status(400)
-        .json({ error: "Имя пользователя должно быть не короче 3 символов" });
-    }
 
-    // Check for existing user
-    const existingUser = await User.findOne({ $or: [{ email }, { username }] });
+    // Check for existing email
+    const existingUser = await User.findOne({ email });
     if (existingUser) {
-      return res.status(400).json({
-        error:
-          existingUser.email === email
-            ? "Email уже зарегистрирован"
-            : "Имя пользователя занято",
-      });
+      return res.status(400).json({ error: "Email уже зарегистрирован" });
     }
 
     const user = new User({
       email,
-      username,
       password,
-      firstName: firstName || "",
-      lastName: lastName || "",
-      middleName: middleName || "",
+      username: "", // Пустое значение по умолчанию
+      firstName: "",
+      lastName: "",
+      middleName: "",
     });
     await user.save();
     res.status(201).json({ message: "Пользователь успешно зарегистрирован" });
@@ -91,6 +78,67 @@ router.post("/login", async (req, res) => {
       },
     });
   } catch (error) {
+    res.status(500).json({ error: "Ошибка сервера: " + error.message });
+  }
+});
+
+// Update profile
+router.put("/update", async (req, res) => {
+  try {
+    const token = req.headers.authorization?.split(" ")[1];
+    if (!token) {
+      return res.status(401).json({ error: "Токен не предоставлен" });
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const { username, firstName, lastName, middleName } = req.body;
+
+    // Validate username if provided
+    if (username && username.length < 3) {
+      return res
+        .status(400)
+        .json({ error: "Имя пользователя должно быть не короче 3 символов" });
+    }
+
+    // Check for existing username
+    if (username) {
+      const existingUser = await User.findOne({
+        username,
+        _id: { $ne: decoded.userId },
+      });
+      if (existingUser) {
+        return res.status(400).json({ error: "Имя пользователя занято" });
+      }
+    }
+
+    const user = await User.findByIdAndUpdate(
+      decoded.userId,
+      {
+        username: username || "",
+        firstName: firstName || "",
+        lastName: lastName || "",
+        middleName: middleName || "",
+      },
+      { new: true }
+    );
+
+    if (!user) {
+      return res.status(404).json({ error: "Пользователь не найден" });
+    }
+
+    res.json({
+      user: {
+        email: user.email,
+        username: user.username,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        middleName: user.middleName,
+      },
+    });
+  } catch (error) {
+    if (error.name === "JsonWebTokenError") {
+      return res.status(401).json({ error: "Недействительный токен" });
+    }
     res.status(500).json({ error: "Ошибка сервера: " + error.message });
   }
 });
