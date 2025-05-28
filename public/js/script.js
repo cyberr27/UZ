@@ -4,10 +4,14 @@ document.addEventListener("DOMContentLoaded", () => {
   const profileEditForm = document.getElementById("profile-edit");
   const loginFormContainer = document.getElementById("login-form");
   const registerFormContainer = document.getElementById("register-form");
+  const profileEditContainer = document.getElementById(
+    "profile-edit-container"
+  );
   const profileContainer = document.getElementById("profile");
   const showRegister = document.getElementById("show-register");
   const showLogin = document.getElementById("show-login");
   const logoutButton = document.getElementById("logout");
+  const editProfileBtn = document.getElementById("edit-profile-btn");
 
   // Toggle between login and register forms
   showRegister.addEventListener("click", () => {
@@ -32,13 +36,12 @@ document.addEventListener("DOMContentLoaded", () => {
     const email = document.getElementById("register-email").value;
     const password = document.getElementById("register-password").value;
 
-    // Client-side validation
     if (!isValidEmail(email)) {
-      alert("Пожалуйста, введите корректный email");
+      alert("Будь ласка, введіть коректну електронну пошту");
       return;
     }
     if (password.length < 6) {
-      alert("Пароль должен быть не короче 6 символов");
+      alert("Пароль повинен містити не менше 6 символів");
       return;
     }
 
@@ -50,14 +53,14 @@ document.addEventListener("DOMContentLoaded", () => {
       });
       const data = await response.json();
       if (response.ok) {
-        alert("Регистрация успешна! Пожалуйста, войдите.");
+        alert("Реєстрація успішна! Будь ласка, увійдіть.");
         registerFormContainer.classList.add("hidden");
         loginFormContainer.classList.remove("hidden");
       } else {
-        alert(data.error || "Ошибка регистрации");
+        alert(data.error || "Помилка реєстрації");
       }
     } catch (error) {
-      alert("Ошибка регистрации: " + error.message);
+      alert("Помилка реєстрації: " + error.message);
     }
   });
 
@@ -68,7 +71,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const password = document.getElementById("login-password").value;
 
     if (!isValidEmail(email)) {
-      alert("Пожалуйста, введите корректный email");
+      alert("Будь ласка, введіть коректну електронну пошту");
       return;
     }
 
@@ -81,46 +84,95 @@ document.addEventListener("DOMContentLoaded", () => {
       const data = await response.json();
       if (response.ok) {
         localStorage.setItem("token", data.token);
-        document.getElementById("profile-username").textContent =
-          data.user.username || "Не указано";
         document.getElementById("profile-email").textContent = data.user.email;
         document.getElementById("profile-firstName").textContent =
-          data.user.firstName || "Не указано";
+          data.user.firstName || "Не вказано";
         document.getElementById("profile-lastName").textContent =
-          data.user.lastName || "Не указано";
+          data.user.lastName || "Не вказано";
         document.getElementById("profile-middleName").textContent =
-          data.user.middleName || "Не указано";
+          data.user.middleName || "Не вказано";
+        document.getElementById("profile-fullname").textContent =
+          `${data.user.firstName || ""} ${data.user.lastName || ""} ${
+            data.user.middleName || ""
+          }`.trim() || "Не вказано";
+
+        // Set profile photo or placeholder
+        const photo = data.user.photo;
+        const profilePhoto = document.getElementById("profile-photo");
+        const placeholder = document.getElementById(
+          "profile-photo-placeholder"
+        );
+        if (photo) {
+          profilePhoto.src = photo;
+          profilePhoto.classList.remove("hidden");
+          placeholder.classList.add("hidden");
+        } else {
+          const initials = `${data.user.firstName?.charAt(0) || ""}${
+            data.user.lastName?.charAt(0) || ""
+          }`.toUpperCase();
+          placeholder.textContent = initials || "НВ";
+          placeholder.classList.remove("hidden");
+          profilePhoto.classList.add("hidden");
+        }
+
         // Populate edit form
-        document.getElementById("edit-username").value =
-          data.user.username || "";
         document.getElementById("edit-firstName").value =
           data.user.firstName || "";
         document.getElementById("edit-lastName").value =
           data.user.lastName || "";
         document.getElementById("edit-middleName").value =
           data.user.middleName || "";
-        loginFormContainer.classList.add("hidden");
-        profileContainer.classList.remove("hidden");
+
+        // Show edit form only on first login if profile is incomplete
+        if (
+          !data.user.firstName &&
+          !data.user.lastName &&
+          !data.user.middleName
+        ) {
+          loginFormContainer.classList.add("hidden");
+          profileEditContainer.classList.remove("hidden");
+        } else {
+          loginFormContainer.classList.add("hidden");
+          profileContainer.classList.remove("hidden");
+        }
       } else {
-        alert(data.error || "Ошибка входа");
+        alert(data.error || "Помилка входу");
       }
     } catch (error) {
-      alert("Ошибка входа: " + error.message);
+      alert("Помилка входу: " + error.message);
     }
   });
 
   // Handle profile update
   profileEditForm.addEventListener("submit", async (e) => {
     e.preventDefault();
-    const username = document.getElementById("edit-username").value;
     const firstName = document.getElementById("edit-firstName").value;
     const lastName = document.getElementById("edit-lastName").value;
     const middleName = document.getElementById("edit-middleName").value;
+    const photoInput = document.getElementById("edit-photo");
+    let photo = null;
 
-    // Client-side validation for username
-    if (username && username.length < 3) {
-      alert("Имя пользователя должно быть не короче 3 символов");
-      return;
+    if (photoInput.files && photoInput.files[0]) {
+      const formData = new FormData();
+      formData.append("photo", photoInput.files[0]);
+
+      try {
+        const uploadResponse = await fetch("/api/auth/upload-photo", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+          body: formData,
+        });
+        const uploadData = await uploadResponse.json();
+        if (uploadResponse.ok) {
+          photo = uploadData.photoUrl;
+        } else {
+          alert(uploadData.error || "Помилка завантаження фото");
+          return;
+        }
+      } catch (error) {
+        alert("Помилка завантаження фото: " + error.message);
+        return;
+      }
     }
 
     try {
@@ -131,31 +183,61 @@ document.addEventListener("DOMContentLoaded", () => {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ username, firstName, lastName, middleName }),
+        body: JSON.stringify({ firstName, lastName, middleName, photo }),
       });
       const data = await response.json();
       if (response.ok) {
-        alert("Профиль обновлен!");
-        document.getElementById("profile-username").textContent =
-          data.user.username || "Не указано";
+        alert("Профіль оновлено!");
         document.getElementById("profile-firstName").textContent =
-          data.user.firstName || "Не указано";
+          data.user.firstName || "Не вказано";
         document.getElementById("profile-lastName").textContent =
-          data.user.lastName || "Не указано";
+          data.user.lastName || "Не вказано";
         document.getElementById("profile-middleName").textContent =
-          data.user.middleName || "Не указано";
+          data.user.middleName || "Не вказано";
+        document.getElementById("profile-fullname").textContent =
+          `${data.user.firstName || ""} ${data.user.lastName || ""} ${
+            data.user.middleName || ""
+          }`.trim() || "Не вказано";
+
+        // Update profile photo or placeholder
+        const profilePhoto = document.getElementById("profile-photo");
+        const placeholder = document.getElementById(
+          "profile-photo-placeholder"
+        );
+        if (data.user.photo) {
+          profilePhoto.src = data.user.photo;
+          profilePhoto.classList.remove("hidden");
+          placeholder.classList.add("hidden");
+        } else {
+          const initials = `${data.user.firstName?.charAt(0) || ""}${
+            data.user.lastName?.charAt(0) || ""
+          }`.toUpperCase();
+          placeholder.textContent = initials || "НВ";
+          placeholder.classList.remove("hidden");
+          profilePhoto.classList.add("hidden");
+        }
+
+        profileEditContainer.classList.add("hidden");
+        profileContainer.classList.remove("hidden");
       } else {
-        alert(data.error || "Ошибка обновления профиля");
+        alert(data.error || "Помилка оновлення профілю");
       }
     } catch (error) {
-      alert("Ошибка обновления профиля: " + error.message);
+      alert("Помилка оновлення профілю: " + error.message);
     }
+  });
+
+  // Show edit profile form
+  editProfileBtn.addEventListener("click", () => {
+    profileContainer.classList.add("hidden");
+    profileEditContainer.classList.remove("hidden");
   });
 
   // Handle logout
   logoutButton.addEventListener("click", () => {
     localStorage.removeItem("token");
     profileContainer.classList.add("hidden");
+    profileEditContainer.classList.add("hidden");
     loginFormContainer.classList.remove("hidden");
   });
 });

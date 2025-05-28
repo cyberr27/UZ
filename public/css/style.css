@@ -3,9 +3,38 @@
 }
 
 button {
-  transition: background-color 0.3s ease;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+button:hover {
+  transform: translateY(-2px);
 }
 
 .hidden {
   display: none;
+}
+
+#profile {
+  max-width: 80%;
+  margin-left: 10%;
+  margin-right: 10%;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
+}
+
+#profile-photo-container {
+  position: relative;
+}
+
+#profile-photo,
+#profile-photo-placeholder {
+  transition: opacity 0.3s ease;
+}
+
+input:focus {
+  box-shadow: 0 0 5px rgba(59, 130, 246, 0.5);
+}
+
+body {
+  background: linear-gradient(to bottom, #f3f4f6, #e5e7eb);
 }
