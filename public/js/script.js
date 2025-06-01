@@ -12,16 +12,19 @@ document.addEventListener("DOMContentLoaded", () => {
   const showLogin = document.getElementById("show-login");
   const logoutButton = document.getElementById("logout");
   const editProfileBtn = document.getElementById("edit-profile-btn");
+  const body = document.body;
 
   // Toggle between login and register forms
   showRegister.addEventListener("click", () => {
     loginFormContainer.classList.add("hidden");
     registerFormContainer.classList.remove("hidden");
+    body.classList.remove("profile-active"); // Убедимся, что фон активен
   });
 
   showLogin.addEventListener("click", () => {
     registerFormContainer.classList.add("hidden");
     loginFormContainer.classList.remove("hidden");
+    body.classList.remove("profile-active"); // Убедимся, что фон активен
   });
 
   // Validate email format
@@ -56,6 +59,7 @@ document.addEventListener("DOMContentLoaded", () => {
         alert("Реєстрація успішна! Будь ласка, увійдіть.");
         registerFormContainer.classList.add("hidden");
         loginFormContainer.classList.remove("hidden");
+        body.classList.remove("profile-active");
       } else {
         alert(data.error || "Помилка реєстрації");
       }
@@ -131,9 +135,11 @@ document.addEventListener("DOMContentLoaded", () => {
         ) {
           loginFormContainer.classList.add("hidden");
           profileEditContainer.classList.remove("hidden");
+          body.classList.add("profile-active"); // Переключаем фон
         } else {
           loginFormContainer.classList.add("hidden");
           profileContainer.classList.remove("hidden");
+          body.classList.add("profile-active"); // Переключаем фон
         }
       } else {
         alert(data.error || "Помилка входу");
@@ -219,6 +225,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         profileEditContainer.classList.add("hidden");
         profileContainer.classList.remove("hidden");
+        body.classList.add("profile-active"); // Переключаем фон
       } else {
         alert(data.error || "Помилка оновлення профілю");
       }
@@ -231,6 +238,7 @@ document.addEventListener("DOMContentLoaded", () => {
   editProfileBtn.addEventListener("click", () => {
     profileContainer.classList.add("hidden");
     profileEditContainer.classList.remove("hidden");
+    body.classList.add("profile-active"); // Переключаем фон
   });
 
   // Handle logout
@@ -239,5 +247,6 @@ document.addEventListener("DOMContentLoaded", () => {
     profileContainer.classList.add("hidden");
     profileEditContainer.classList.add("hidden");
     loginFormContainer.classList.remove("hidden");
+    body.classList.remove("profile-active"); // Возвращаем фоновое изображение
   });
 });
