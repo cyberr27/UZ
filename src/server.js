@@ -18,7 +18,16 @@ const storage = multer.diskStorage({
     cb(null, Date.now() + "-" + file.originalname);
   },
 });
-const upload = multer({ storage });
+const upload = multer({
+  storage,
+  fileFilter: (req, file, cb) => {
+    if (!file.mimetype.startsWith("image/")) {
+      return cb(new Error("Только изображения разрешены!"));
+    }
+    cb(null, true);
+  },
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+});
 
 // Middleware
 app.use(cors());
@@ -35,6 +44,11 @@ app.use(
     },
   })
 );
+
+// Serve index.html for the root route
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "index.html"));
+});
 
 // Routes
 app.use("/api/auth", authRoutes);
@@ -53,12 +67,21 @@ app.post("/api/auth/upload-photo", upload.single("photo"), async (req, res) => {
       { photo: photoUrl },
       { new: true }
     );
+    if (!user) {
+      return res.status(404).json({ error: "Користувача не знайдено" });
+    }
     res.json({ photoUrl });
   } catch (error) {
     res
       .status(500)
       .json({ error: "Помилка завантаження фото: " + error.message });
   }
+});
+
+// Global error handler
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({ error: "Внутренняя ошибка сервера" });
 });
 
 // Connect to MongoDB
