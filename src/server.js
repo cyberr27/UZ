@@ -32,22 +32,19 @@ const upload = multer({
 // Middleware
 app.use(cors());
 app.use(express.json());
-app.use(
-  express.static(path.join(__dirname, "public"), {
-    setHeaders: (res, filePath) => {
-      if (filePath.endsWith(".css")) {
-        res.setHeader("Content-Type", "text/css");
-      }
-      if (filePath.endsWith(".js")) {
-        res.setHeader("Content-Type", "application/javascript");
-      }
-    },
-  })
-);
+
+// Статические файлы
+app.use(express.static(path.join(__dirname, "public")));
 
 // Serve index.html for the root route
 app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "index.html"));
+  const indexPath = path.join(__dirname, "public", "index.html");
+  res.sendFile(indexPath, (err) => {
+    if (err) {
+      console.error("Ошибка отправки index.html:", err);
+      res.status(500).json({ error: "Не удалось загрузить страницу" });
+    }
+  });
 });
 
 // Routes
@@ -58,7 +55,7 @@ app.post("/api/auth/upload-photo", upload.single("photo"), async (req, res) => {
   try {
     const token = req.headers.authorization?.split(" ")[1];
     if (!token) {
-      return res.status(401).json({ error: "Токен не надано" });
+      return res.status(401).json({ error: "Токен не предоставлен" });
     }
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const photoUrl = `/uploads/${req.file.filename}`;
@@ -68,13 +65,11 @@ app.post("/api/auth/upload-photo", upload.single("photo"), async (req, res) => {
       { new: true }
     );
     if (!user) {
-      return res.status(404).json({ error: "Користувача не знайдено" });
+      return res.status(404).json({ error: "Пользователь не найден" });
     }
     res.json({ photoUrl });
   } catch (error) {
-    res
-      .status(500)
-      .json({ error: "Помилка завантаження фото: " + error.message });
+    res.status(500).json({ error: "Ошибка загрузки фото: " + error.message });
   }
 });
 
