@@ -18,13 +18,13 @@ document.addEventListener("DOMContentLoaded", () => {
   showRegister.addEventListener("click", () => {
     loginFormContainer.classList.add("hidden");
     registerFormContainer.classList.remove("hidden");
-    body.classList.remove("profile-active"); // Убедимся, что фон активен
+    body.classList.remove("profile-active");
   });
 
   showLogin.addEventListener("click", () => {
     registerFormContainer.classList.add("hidden");
     loginFormContainer.classList.remove("hidden");
-    body.classList.remove("profile-active"); // Убедимся, что фон активен
+    body.classList.remove("profile-active");
   });
 
   // Validate email format
@@ -110,6 +110,10 @@ document.addEventListener("DOMContentLoaded", () => {
           profilePhoto.src = photo;
           profilePhoto.classList.remove("hidden");
           placeholder.classList.add("hidden");
+          // Проверка загрузки изображения
+          profilePhoto.onerror = () => {
+            profilePhoto.src = "/img/default-profile.jpg";
+          };
         } else {
           const initials = `${data.user.firstName?.charAt(0) || ""}${
             data.user.lastName?.charAt(0) || ""
@@ -127,7 +131,6 @@ document.addEventListener("DOMContentLoaded", () => {
         document.getElementById("edit-middleName").value =
           data.user.middleName || "";
 
-        // Show edit form only on first login if profile is incomplete
         if (
           !data.user.firstName &&
           !data.user.lastName &&
@@ -135,11 +138,11 @@ document.addEventListener("DOMContentLoaded", () => {
         ) {
           loginFormContainer.classList.add("hidden");
           profileEditContainer.classList.remove("hidden");
-          body.classList.add("profile-active"); // Переключаем фон
+          body.classList.add("profile-active");
         } else {
           loginFormContainer.classList.add("hidden");
           profileContainer.classList.remove("hidden");
-          body.classList.add("profile-active"); // Переключаем фон
+          body.classList.add("profile-active");
         }
       } else {
         alert(data.error || "Помилка входу");
@@ -214,6 +217,9 @@ document.addEventListener("DOMContentLoaded", () => {
           profilePhoto.src = data.user.photo;
           profilePhoto.classList.remove("hidden");
           placeholder.classList.add("hidden");
+          profilePhoto.onerror = () => {
+            profilePhoto.src = "/img/default-profile.jpg";
+          };
         } else {
           const initials = `${data.user.firstName?.charAt(0) || ""}${
             data.user.lastName?.charAt(0) || ""
@@ -225,7 +231,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         profileEditContainer.classList.add("hidden");
         profileContainer.classList.remove("hidden");
-        body.classList.add("profile-active"); // Переключаем фон
+        body.classList.add("profile-active");
       } else {
         alert(data.error || "Помилка оновлення профілю");
       }
@@ -238,7 +244,7 @@ document.addEventListener("DOMContentLoaded", () => {
   editProfileBtn.addEventListener("click", () => {
     profileContainer.classList.add("hidden");
     profileEditContainer.classList.remove("hidden");
-    body.classList.add("profile-active"); // Переключаем фон
+    body.classList.add("profile-active");
   });
 
   // Handle logout
@@ -247,6 +253,6 @@ document.addEventListener("DOMContentLoaded", () => {
     profileContainer.classList.add("hidden");
     profileEditContainer.classList.add("hidden");
     loginFormContainer.classList.remove("hidden");
-    body.classList.remove("profile-active"); // Возвращаем фоновое изображение
+    body.classList.remove("profile-active");
   });
 });
