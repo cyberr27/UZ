@@ -112,7 +112,7 @@ document.addEventListener("DOMContentLoaded", () => {
           placeholder.classList.add("hidden");
           // Проверка загрузки изображения
           profilePhoto.onerror = () => {
-            profilePhoto.src = "/img/default-profile.jpg";
+            profilePhoto.src = "/img/default-profile.png";
           };
         } else {
           const initials = `${data.user.firstName?.charAt(0) || ""}${
