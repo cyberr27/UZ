@@ -34,11 +34,11 @@ app.use(cors());
 app.use(express.json());
 
 // Статические файлы
-app.use(express.static(path.join(__dirname, "public")));
+app.use(express.static(path.join(__dirname, "../public")));
 
 // Serve index.html for the root route
 app.get("/", (req, res) => {
-  const indexPath = path.join(__dirname, "public", "index.html");
+  const indexPath = path.join(__dirname, "../public", "index.html");
   res.sendFile(indexPath, (err) => {
     if (err) {
       console.error("Ошибка отправки index.html:", err);
