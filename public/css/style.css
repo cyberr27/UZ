@@ -76,7 +76,7 @@ button:hover {
   height: 5%;
   font-size: 10px;
   padding: 0;
-  bottom: 8%; 
+  bottom: 8%;
 }
 
 #edit-profile-btn {
@@ -125,26 +125,67 @@ button:hover {
 
 #profile-firstName {
   position: absolute;
-  top: 11%;
-  left: 25%;
+  top: 17%;
+  left: 35%;
   font-weight: 900;
   font-size: 20px;
+}
+.my-fN {
+  position: absolute;
+  top: 18%;
+  left: 25%;
 }
 
 #profile-lastName {
   position: absolute;
-  top: 23%;
-  left: 25%;
+  top: 11%;
+  left: 35%;
   font-weight: 900;
   font-size: 20px;
+}
+.my-lN {
+  position: absolute;
+  top: 12%;
+  left: 25%;
 }
 
 #profile-middleName {
   position: absolute;
-  top: 17%;
-  left: 25%;
+  top: 23%;
+  left: 35%;
   font-weight: 900;
   font-size: 20px;
+}
+.my-mN {
+  position: absolute;
+  top: 24%;
+  left: 25%;
+}
+
+#profile-position {
+  position: absolute;
+  top: 29%;
+  left: 35%;
+  font-weight: 600;
+  font-size: 20px;
+}
+.my-pp {
+  position: absolute;
+  top: 30%;
+  left: 25%;
+}
+
+#profile-employeeId {
+  position: absolute;
+  top: 35%;
+  left: 37%;
+  font-weight: 600;
+  font-size: 20px;
+}
+.my-id {
+  position: absolute;
+  top: 36%;
+  left: 25%;
 }
 
 input:focus {
