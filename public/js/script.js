@@ -105,10 +105,6 @@ document.addEventListener("DOMContentLoaded", () => {
           profilePhoto.src = photo;
           profilePhoto.classList.remove("hidden");
           placeholder.classList.add("hidden");
-          // Проверка загрузки изображения
-          profilePhoto.onerror = () => {
-            profilePhoto.src = "/img/default-profile.png";
-          };
         } else {
           const initials = `${data.user.firstName?.charAt(0) || ""}${
             data.user.lastName?.charAt(0) || ""
@@ -198,10 +194,6 @@ document.addEventListener("DOMContentLoaded", () => {
           data.user.lastName || "Не вказано";
         document.getElementById("profile-middleName").textContent =
           data.user.middleName || "Не вказано";
-        document.getElementById("profile-fullname").textContent =
-          `${data.user.firstName || ""} ${data.user.lastName || ""} ${
-            data.user.middleName || ""
-          }`.trim() || "Не вказано";
 
         // Update profile photo or placeholder
         const profilePhoto = document.getElementById("profile-photo");
@@ -212,9 +204,6 @@ document.addEventListener("DOMContentLoaded", () => {
           profilePhoto.src = data.user.photo;
           profilePhoto.classList.remove("hidden");
           placeholder.classList.add("hidden");
-          profilePhoto.onerror = () => {
-            profilePhoto.src = "/img/default-profile.jpg";
-          };
         } else {
           const initials = `${data.user.firstName?.charAt(0) || ""}${
             data.user.lastName?.charAt(0) || ""
