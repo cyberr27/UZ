@@ -7,6 +7,8 @@ const userSchema = new mongoose.Schema({
   firstName: { type: String, default: "" },
   lastName: { type: String, default: "" },
   middleName: { type: String, default: "" },
+  position: { type: String, default: "" }, // Новое поле "Посада"
+  employeeId: { type: String, default: "" }, // Новое поле "Табельний номер"
   photo: { type: String, default: "" },
 });
 

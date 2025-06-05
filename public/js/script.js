@@ -94,6 +94,10 @@ document.addEventListener("DOMContentLoaded", () => {
           data.user.lastName || "Не вказано";
         document.getElementById("profile-middleName").textContent =
           data.user.middleName || "Не вказано";
+        document.getElementById("profile-position").textContent =
+          data.user.position || "Не вказано";
+        document.getElementById("profile-employeeId").textContent =
+          data.user.employeeId || "Не вказано";
 
         // Установка фото профиля или заглушки
         const photo = data.user.photo;
@@ -130,11 +134,17 @@ document.addEventListener("DOMContentLoaded", () => {
           data.user.lastName || "";
         document.getElementById("edit-middleName").value =
           data.user.middleName || "";
+        document.getElementById("edit-position").value =
+          data.user.position || "";
+        document.getElementById("edit-employeeId").value =
+          data.user.employeeId || "";
 
         if (
           !data.user.firstName &&
           !data.user.lastName &&
-          !data.user.middleName
+          !data.user.middleName &&
+          !data.user.position &&
+          !data.user.employeeId
         ) {
           loginFormContainer.classList.add("hidden");
           profileEditContainer.classList.remove("hidden");
@@ -158,6 +168,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const firstName = document.getElementById("edit-firstName").value;
     const lastName = document.getElementById("edit-lastName").value;
     const middleName = document.getElementById("edit-middleName").value;
+    const position = document.getElementById("edit-position").value;
+    const employeeId = document.getElementById("edit-employeeId").value;
     const photoInput = document.getElementById("edit-photo");
     let photo = null;
 
@@ -204,7 +216,14 @@ document.addEventListener("DOMContentLoaded", () => {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ firstName, lastName, middleName, photo }),
+        body: JSON.stringify({
+          firstName,
+          lastName,
+          middleName,
+          position,
+          employeeId,
+          photo,
+        }),
       });
       const data = await response.json();
       if (response.ok) {
@@ -215,6 +234,10 @@ document.addEventListener("DOMContentLoaded", () => {
           data.user.lastName || "Не вказано";
         document.getElementById("profile-middleName").textContent =
           data.user.middleName || "Не вказано";
+        document.getElementById("profile-position").textContent =
+          data.user.position || "Не вказано";
+        document.getElementById("profile-employeeId").textContent =
+          data.user.employeeId || "Не вказано";
 
         // Обновление фото профиля или заглушки
         const profilePhoto = document.getElementById("profile-photo");

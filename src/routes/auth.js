@@ -46,6 +46,8 @@ router.post("/register", async (req, res) => {
       firstName: "",
       lastName: "",
       middleName: "",
+      position: "", // Инициализация нового поля
+      employeeId: "", // Инициализация нового поля
     });
     await user.save();
     res.status(201).json({ message: "Користувач успішно зареєстрований" });
@@ -81,6 +83,8 @@ router.post("/login", async (req, res) => {
         firstName: user.firstName,
         lastName: user.lastName,
         middleName: user.middleName,
+        position: user.position,
+        employeeId: user.employeeId,
         photo: user.photo,
       },
     });
@@ -98,7 +102,8 @@ router.put("/update", async (req, res) => {
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const { firstName, lastName, middleName, photo } = req.body;
+    const { firstName, lastName, middleName, position, employeeId, photo } =
+      req.body;
 
     const user = await User.findByIdAndUpdate(
       decoded.userId,
@@ -106,6 +111,8 @@ router.put("/update", async (req, res) => {
         firstName: firstName || "",
         lastName: lastName || "",
         middleName: middleName || "",
+        position: position || "",
+        employeeId: employeeId || "",
         photo: photo || "",
       },
       { new: true }
@@ -121,6 +128,8 @@ router.put("/update", async (req, res) => {
         firstName: user.firstName,
         lastName: user.lastName,
         middleName: user.middleName,
+        position: user.position,
+        employeeId: user.employeeId,
         photo: user.photo,
       },
     });
