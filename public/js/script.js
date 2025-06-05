@@ -14,7 +14,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const editProfileBtn = document.getElementById("edit-profile-btn");
   const body = document.body;
 
-  // Toggle between login and register forms
+  // Переключение между формами входа и регистрации
   showRegister.addEventListener("click", () => {
     loginFormContainer.classList.add("hidden");
     registerFormContainer.classList.remove("hidden");
@@ -27,13 +27,13 @@ document.addEventListener("DOMContentLoaded", () => {
     body.classList.remove("profile-active");
   });
 
-  // Validate email format
+  // Валидация email
   const isValidEmail = (email) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
   };
 
-  // Handle registration
+  // Обработка регистрации
   registerForm.addEventListener("submit", async (e) => {
     e.preventDefault();
     const email = document.getElementById("register-email").value;
@@ -68,7 +68,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // Handle login
+  // Обработка входа
   loginForm.addEventListener("submit", async (e) => {
     e.preventDefault();
     const email = document.getElementById("login-email").value;
@@ -95,7 +95,7 @@ document.addEventListener("DOMContentLoaded", () => {
         document.getElementById("profile-middleName").textContent =
           data.user.middleName || "Не вказано";
 
-        // Set profile photo or placeholder
+        // Установка фото профиля или заглушки
         const photo = data.user.photo;
         const profilePhoto = document.getElementById("profile-photo");
         const placeholder = document.getElementById(
@@ -105,6 +105,15 @@ document.addEventListener("DOMContentLoaded", () => {
           profilePhoto.src = photo;
           profilePhoto.classList.remove("hidden");
           placeholder.classList.add("hidden");
+          profilePhoto.onerror = () => {
+            console.error("Ошибка загрузки изображения:", photo);
+            const initials = `${data.user.firstName?.charAt(0) || ""}${
+              data.user.lastName?.charAt(0) || ""
+            }`.toUpperCase();
+            placeholder.textContent = initials || "НВ";
+            placeholder.classList.remove("hidden");
+            profilePhoto.classList.add("hidden");
+          };
         } else {
           const initials = `${data.user.firstName?.charAt(0) || ""}${
             data.user.lastName?.charAt(0) || ""
@@ -114,7 +123,7 @@ document.addEventListener("DOMContentLoaded", () => {
           profilePhoto.classList.add("hidden");
         }
 
-        // Populate edit form
+        // Заполнение формы редактирования
         document.getElementById("edit-firstName").value =
           data.user.firstName || "";
         document.getElementById("edit-lastName").value =
@@ -143,7 +152,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // Handle profile update
+  // Обработка обновления профиля
   profileEditForm.addEventListener("submit", async (e) => {
     e.preventDefault();
     const firstName = document.getElementById("edit-firstName").value;
@@ -157,9 +166,14 @@ document.addEventListener("DOMContentLoaded", () => {
       formData.append("photo", photoInput.files[0]);
 
       try {
+        const token = localStorage.getItem("token");
+        if (!token) {
+          alert("Токен отсутствует. Пожалуйста, войдите снова.");
+          return;
+        }
         const uploadResponse = await fetch("/api/auth/upload-photo", {
           method: "POST",
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+          headers: { Authorization: `Bearer ${token}` },
           body: formData,
         });
         const uploadData = await uploadResponse.json();
@@ -170,6 +184,7 @@ document.addEventListener("DOMContentLoaded", () => {
           return;
         }
       } catch (error) {
+        console.error("Ошибка при загрузке фото:", error);
         alert("Помилка завантаження фото: " + error.message);
         return;
       }
@@ -177,6 +192,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     try {
       const token = localStorage.getItem("token");
+      if (!token) {
+        alert("Токен отсутствует. Пожалуйста, войдите снова.");
+        return;
+      }
       const response = await fetch("/api/auth/update", {
         method: "PUT",
         headers: {
@@ -195,7 +214,7 @@ document.addEventListener("DOMContentLoaded", () => {
         document.getElementById("profile-middleName").textContent =
           data.user.middleName || "Не вказано";
 
-        // Update profile photo or placeholder
+        // Обновление фото профиля или заглушки
         const profilePhoto = document.getElementById("profile-photo");
         const placeholder = document.getElementById(
           "profile-photo-placeholder"
@@ -204,6 +223,15 @@ document.addEventListener("DOMContentLoaded", () => {
           profilePhoto.src = data.user.photo;
           profilePhoto.classList.remove("hidden");
           placeholder.classList.add("hidden");
+          profilePhoto.onerror = () => {
+            console.error("Ошибка загрузки изображения:", data.user.photo);
+            const initials = `${data.user.firstName?.charAt(0) || ""}${
+              data.user.lastName?.charAt(0) || ""
+            }`.toUpperCase();
+            placeholder.textContent = initials || "НВ";
+            placeholder.classList.remove("hidden");
+            profilePhoto.classList.add("hidden");
+          };
         } else {
           const initials = `${data.user.firstName?.charAt(0) || ""}${
             data.user.lastName?.charAt(0) || ""
@@ -220,18 +248,19 @@ document.addEventListener("DOMContentLoaded", () => {
         alert(data.error || "Помилка оновлення профілю");
       }
     } catch (error) {
+      console.error("Ошибка при обновлении профиля:", error);
       alert("Помилка оновлення профілю: " + error.message);
     }
   });
 
-  // Show edit profile form
+  // Показ формы редактирования профиля
   editProfileBtn.addEventListener("click", () => {
     profileContainer.classList.add("hidden");
     profileEditContainer.classList.remove("hidden");
     body.classList.add("profile-active");
   });
 
-  // Handle logout
+  // Обработка выхода
   logoutButton.addEventListener("click", () => {
     localStorage.removeItem("token");
     profileContainer.classList.add("hidden");
