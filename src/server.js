@@ -8,7 +8,7 @@ const multer = require("multer");
 const jwt = require("jsonwebtoken");
 
 // Импортируем модель User один раз в начале файла
-const User = require("./models/User"); // Исправленный путь
+const User = require("./models/User"); // Путь относительно src
 
 // Настраиваем загрузку переменных окружения
 dotenv.config();
@@ -17,7 +17,7 @@ const app = express();
 // Конфигурация Multer для загрузки файлов
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    const uploadPath = path.join(__dirname, "public/uploads/");
+    const uploadPath = path.join(__dirname, "../public/uploads/"); // Поднимаемся на уровень выше из src к project
     // Проверяем существование директории, если нет — создаем
     require("fs").mkdirSync(uploadPath, { recursive: true });
     cb(null, uploadPath);
@@ -43,11 +43,11 @@ app.use(cors());
 app.use(express.json());
 
 // Обслуживание статических файлов
-app.use(express.static(path.join(__dirname, "public")));
+app.use(express.static(path.join(__dirname, "../public"))); // Путь к project/public
 
 // Маршрут для главной страницы
 app.get("/", (req, res) => {
-  const indexPath = path.join(__dirname, "public", "index.html");
+  const indexPath = path.join(__dirname, "../public", "index.html"); // Путь к project/public/index.html
   res.sendFile(indexPath, (err) => {
     if (err) {
       console.error("Помилка відправки index.html:", err);
