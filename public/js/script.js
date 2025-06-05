@@ -88,17 +88,12 @@ document.addEventListener("DOMContentLoaded", () => {
       const data = await response.json();
       if (response.ok) {
         localStorage.setItem("token", data.token);
-        document.getElementById("profile-email").textContent = data.user.email;
         document.getElementById("profile-firstName").textContent =
           data.user.firstName || "Не вказано";
         document.getElementById("profile-lastName").textContent =
           data.user.lastName || "Не вказано";
         document.getElementById("profile-middleName").textContent =
           data.user.middleName || "Не вказано";
-        document.getElementById("profile-fullname").textContent =
-          `${data.user.firstName || ""} ${data.user.lastName || ""} ${
-            data.user.middleName || ""
-          }`.trim() || "Не вказано";
 
         // Set profile photo or placeholder
         const photo = data.user.photo;

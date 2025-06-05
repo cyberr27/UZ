@@ -52,7 +52,7 @@ body.profile-active #auth-container {
 /* Стили для профиля */
 #profile {
   width: 100%;
-  max-width: 800px;
+  height: 100%;
   background: rgba(255, 255, 255, 0.95); /* Непрозрачный фон */
   padding: 2rem;
   border-radius: 12px;
@@ -68,17 +68,83 @@ button:hover {
   transform: translateY(-2px);
 }
 
+#logout {
+  position: absolute;
+  right: 4%;
+  top: 11%;
+  width: 3%;
+  height: 5%;
+  font-size: 10px;
+  padding: 0;
+  bottom: 8%; 
+}
+
+#edit-profile-btn {
+  position: absolute;
+  right: 7.5%;
+  top: 11%;
+  width: 8%;
+  height: 5%;
+  font-size: 10px;
+  padding: 0;
+}
+
 .hidden {
   display: none;
 }
 
 #profile-photo-container {
   position: relative;
+  height: 100%;
+  width: 100%;
+}
+
+.userInfo {
+  position: absolute;
+  left: 4%;
+  top: 11%;
+  width: 20%;
+  height: 40%;
+}
+
+.myH {
+  position: absolute;
+  right: 5%;
+  top: 8%;
+  font-weight: 400;
+  font-size: 15px;
 }
 
 #profile-photo,
 #profile-photo-placeholder {
   transition: opacity 0.3s ease;
+  border-radius: 15%;
+  width: 100%;
+  height: 100%;
+}
+
+#profile-firstName {
+  position: absolute;
+  top: 11%;
+  left: 25%;
+  font-weight: 900;
+  font-size: 20px;
+}
+
+#profile-lastName {
+  position: absolute;
+  top: 23%;
+  left: 25%;
+  font-weight: 900;
+  font-size: 20px;
+}
+
+#profile-middleName {
+  position: absolute;
+  top: 17%;
+  left: 25%;
+  font-weight: 900;
+  font-size: 20px;
 }
 
 input:focus {
