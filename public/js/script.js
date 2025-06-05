@@ -106,7 +106,7 @@ document.addEventListener("DOMContentLoaded", () => {
           profilePhoto.classList.remove("hidden");
           placeholder.classList.add("hidden");
           profilePhoto.onerror = () => {
-            console.error("Ошибка загрузки изображения:", photo);
+            console.error("Помилка завантаження зображення:", photo);
             const initials = `${data.user.firstName?.charAt(0) || ""}${
               data.user.lastName?.charAt(0) || ""
             }`.toUpperCase();
@@ -168,7 +168,7 @@ document.addEventListener("DOMContentLoaded", () => {
       try {
         const token = localStorage.getItem("token");
         if (!token) {
-          alert("Токен отсутствует. Пожалуйста, войдите снова.");
+          alert("Токен відсутній. Будь ласка, увійдіть знову.");
           return;
         }
         const uploadResponse = await fetch("/api/auth/upload-photo", {
@@ -179,12 +179,14 @@ document.addEventListener("DOMContentLoaded", () => {
         const uploadData = await uploadResponse.json();
         if (uploadResponse.ok) {
           photo = uploadData.photoUrl;
+          // Сбрасываем поле файла после успешной загрузки
+          photoInput.value = "";
         } else {
           alert(uploadData.error || "Помилка завантаження фото");
           return;
         }
       } catch (error) {
-        console.error("Ошибка при загрузке фото:", error);
+        console.error("Помилка при завантаженні фото:", error);
         alert("Помилка завантаження фото: " + error.message);
         return;
       }
@@ -193,7 +195,7 @@ document.addEventListener("DOMContentLoaded", () => {
     try {
       const token = localStorage.getItem("token");
       if (!token) {
-        alert("Токен отсутствует. Пожалуйста, войдите снова.");
+        alert("Токен відсутній. Будь ласка, увійдіть знову.");
         return;
       }
       const response = await fetch("/api/auth/update", {
@@ -224,7 +226,7 @@ document.addEventListener("DOMContentLoaded", () => {
           profilePhoto.classList.remove("hidden");
           placeholder.classList.add("hidden");
           profilePhoto.onerror = () => {
-            console.error("Ошибка загрузки изображения:", data.user.photo);
+            console.error("Помилка завантаження зображення:", data.user.photo);
             const initials = `${data.user.firstName?.charAt(0) || ""}${
               data.user.lastName?.charAt(0) || ""
             }`.toUpperCase();
@@ -248,7 +250,7 @@ document.addEventListener("DOMContentLoaded", () => {
         alert(data.error || "Помилка оновлення профілю");
       }
     } catch (error) {
-      console.error("Ошибка при обновлении профиля:", error);
+      console.error("Помилка при оновленні профілю:", error);
       alert("Помилка оновлення профілю: " + error.message);
     }
   });
