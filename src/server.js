@@ -5,6 +5,7 @@ const dotenv = require("dotenv");
 const authRoutes = require("./routes/auth");
 const path = require("path");
 const multer = require("multer");
+const jwt = require("jsonwebtoken"); // Добавляем импорт jwt
 
 dotenv.config();
 const app = express();
@@ -58,6 +59,9 @@ app.post("/api/auth/upload-photo", upload.single("photo"), async (req, res) => {
       return res.status(401).json({ error: "Токен не предоставлен" });
     }
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    if (!req.file) {
+      return res.status(400).json({ error: "Файл не загружен" });
+    }
     const photoUrl = `/uploads/${req.file.filename}`;
     const user = await User.findByIdAndUpdate(
       decoded.userId,
@@ -69,6 +73,10 @@ app.post("/api/auth/upload-photo", upload.single("photo"), async (req, res) => {
     }
     res.json({ photoUrl });
   } catch (error) {
+    console.error("Ошибка в /api/auth/upload-photo:", error);
+    if (error.name === "JsonWebTokenError") {
+      return res.status(401).json({ error: "Недействительный токен" });
+    }
     res.status(500).json({ error: "Ошибка загрузки фото: " + error.message });
   }
 });
