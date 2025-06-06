@@ -16,26 +16,25 @@ body.bodyBox.profile-active {
 }
 
 #auth-container {
-  background: rgba(255, 255, 255, 0.7); /* Полупрозрачный белый фон */
+  background: rgba(255, 255, 255, 0.7);
   padding: 2rem;
   border-radius: 12px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
   width: 100%;
-  max-width: 500px; /* Ограничение ширины для форм входа/регистрации */
-  backdrop-filter: blur(10px); /* Усиленное размытие для красоты */
+  max-width: 500px;
+  backdrop-filter: blur(10px);
   transition: all 0.3s ease-in-out;
 }
 
-/* Полноэкранный режим для auth-container после входа */
 body.profile-active #auth-container {
   max-width: 100%;
   width: 100%;
   height: 100vh;
   padding: 2rem;
-  border-radius: 0; /* Убираем скругление углов */
+  border-radius: 0;
   box-shadow: none;
-  background: rgba(255, 255, 255, 0.95); /* Непрозрачный фон для профиля */
-  backdrop-filter: none; /* Убираем размытие для профиля */
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: none;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -46,18 +45,17 @@ body.profile-active #auth-container {
 .form-container {
   transition: all 0.3s ease-in-out;
   width: 100%;
-  max-width: 500px; /* Ограничение ширины для форм */
+  max-width: 500px;
 }
 
-/* Стили для профиля */
 #profile {
   width: 100%;
   height: 100%;
-  background: rgba(255, 255, 255, 0.95); /* Непрозрачный фон */
+  background: rgba(255, 255, 255, 0.95);
   padding: 2rem;
   border-radius: 12px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
-  backdrop-filter: none; /* Без размытия для читаемости */
+  backdrop-filter: none;
 }
 
 button {
@@ -123,19 +121,6 @@ button:hover {
   height: 100%;
 }
 
-#profile-firstName {
-  position: absolute;
-  top: 17%;
-  left: 35%;
-  font-weight: 900;
-  font-size: 20px;
-}
-.my-fN {
-  position: absolute;
-  top: 18%;
-  left: 25%;
-}
-
 #profile-lastName {
   position: absolute;
   top: 11%;
@@ -146,6 +131,19 @@ button:hover {
 .my-lN {
   position: absolute;
   top: 12%;
+  left: 25%;
+}
+
+#profile-firstName {
+  position: absolute;
+  top: 17%;
+  left: 35%;
+  font-weight: 900;
+  font-size: 20px;
+}
+.my-fN {
+  position: absolute;
+  top: 18%;
   left: 25%;
 }
 
@@ -185,6 +183,19 @@ button:hover {
 .my-id {
   position: absolute;
   top: 36%;
+  left: 25%;
+}
+
+#profile-workerId {
+  position: absolute;
+  top: 41%;
+  left: 37%;
+  font-weight: 600;
+  font-size: 20px;
+}
+.my-wid {
+  position: absolute;
+  top: 42%;
   left: 25%;
 }
 

@@ -2,7 +2,7 @@ const express = require("express");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const User = require("../models/User"); // Путь относительно routes
-const router = express.Router(); // Инициализация router
+const router = express.Router();
 
 // Validate email format
 const isValidEmail = (email) => {
@@ -46,8 +46,9 @@ router.post("/register", async (req, res) => {
       firstName: "",
       lastName: "",
       middleName: "",
-      position: "", // Инициализация нового поля
-      employeeId: "", // Инициализация нового поля
+      position: "",
+      employeeId: "",
+      // workerId будет установлен автоматически в pre-save хуке
     });
     await user.save();
     res.status(201).json({ message: "Користувач успішно зареєстрований" });
@@ -85,6 +86,7 @@ router.post("/login", async (req, res) => {
         middleName: user.middleName,
         position: user.position,
         employeeId: user.employeeId,
+        workerId: user.workerId,
         photo: user.photo,
       },
     });
@@ -114,6 +116,7 @@ router.put("/update", async (req, res) => {
         position: position || "",
         employeeId: employeeId || "",
         photo: photo || "",
+        // workerId не обновляется, остается неизменным
       },
       { new: true }
     );
@@ -130,6 +133,7 @@ router.put("/update", async (req, res) => {
         middleName: user.middleName,
         position: user.position,
         employeeId: user.employeeId,
+        workerId: user.workerId,
         photo: user.photo,
       },
     });
@@ -163,6 +167,7 @@ router.get("/me", async (req, res) => {
         middleName: user.middleName,
         position: user.position,
         employeeId: user.employeeId,
+        workerId: user.workerId,
         photo: user.photo,
       },
     });

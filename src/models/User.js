@@ -7,8 +7,9 @@ const userSchema = new mongoose.Schema({
   firstName: { type: String, default: "" },
   lastName: { type: String, default: "" },
   middleName: { type: String, default: "" },
-  position: { type: String, default: "" }, // Новое поле "Посада"
-  employeeId: { type: String, default: "" }, // Новое поле "Табельний номер"
+  position: { type: String, default: "" },
+  employeeId: { type: String, default: "" },
+  workerId: { type: Number, unique: true }, // Новое поле для ID працівника
   photo: { type: String, default: "" },
 });
 
@@ -16,6 +17,18 @@ const userSchema = new mongoose.Schema({
 userSchema.pre("save", async function (next) {
   if (this.isModified("password")) {
     this.password = await bcrypt.hash(this.password, 10);
+  }
+  // Автоматическое присвоение workerId, если он не задан
+  if (this.isNew && !this.workerId) {
+    try {
+      const lastUser = await mongoose
+        .model("User")
+        .findOne()
+        .sort({ workerId: -1 });
+      this.workerId = lastUser && lastUser.workerId ? lastUser.workerId + 1 : 1;
+    } catch (error) {
+      return next(error);
+    }
   }
   next();
 });

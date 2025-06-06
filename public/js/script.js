@@ -38,6 +38,8 @@ document.addEventListener("DOMContentLoaded", () => {
           data.user.position || "Не вказано";
         document.getElementById("profile-employeeId").textContent =
           data.user.employeeId || "Не вказано";
+        document.getElementById("profile-workerId").textContent =
+          data.user.workerId || "Не вказано";
 
         // Обновление фото профиля или заглушки
         const profilePhoto = document.getElementById("profile-photo");
@@ -214,6 +216,8 @@ document.addEventListener("DOMContentLoaded", () => {
           data.user.position || "Не вказано";
         document.getElementById("profile-employeeId").textContent =
           data.user.employeeId || "Не вказано";
+        document.getElementById("profile-workerId").textContent =
+          data.user.workerId || "Не вказано";
 
         // Установка фото профиля или заглушки
         const photo = data.user.photo;
@@ -354,6 +358,8 @@ document.addEventListener("DOMContentLoaded", () => {
           data.user.position || "Не вказано";
         document.getElementById("profile-employeeId").textContent =
           data.user.employeeId || "Не вказано";
+        document.getElementById("profile-workerId").textContent =
+          data.user.workerId || "Не вказано";
 
         // Обновление фото профиля или заглушки
         const profilePhoto = document.getElementById("profile-photo");
@@ -361,7 +367,7 @@ document.addEventListener("DOMContentLoaded", () => {
           "profile-photo-placeholder"
         );
         if (data.user.photo) {
-          profilePhoto.src = `${data.user.photo}?t=${Date.now()}`; // Добавляем временную метку
+          profilePhoto.src = `${data.user.photo}?t=${Date.now()}`;
           profilePhoto.classList.remove("hidden");
           placeholder.classList.add("hidden");
           profilePhoto.onerror = () => {
