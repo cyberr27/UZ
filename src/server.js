@@ -2,37 +2,73 @@ const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 const dotenv = require("dotenv");
-const authRoutes = require("./routes/auth"); // Путь относительно src
+const authRoutes = require("./routes/auth");
 const path = require("path");
 const jwt = require("jsonwebtoken");
 const cloudinary = require("cloudinary").v2;
-const fileUpload = require("express-fileupload"); // Імпортуємо fileUpload
+const fileUpload = require("express-fileupload");
 
-// Импортируем модель User
-const User = require("./models/User"); // Путь относительно src
+const User = require("./models/User");
 
-// Настраиваем загрузку переменных окружения
 dotenv.config();
-const app = express(); // Ініціалізуємо app
+const app = express();
 
-// Додаємо fileUpload middleware ПІСЛЯ ініціалізації app
+// Логування змінних середовища для діагностики
+console.log("CLOUDINARY_URL:", process.env.CLOUDINARY_URL ? "Set" : "Not set");
+console.log(
+  "CLOUDINARY_CLOUD_NAME:",
+  process.env.CLOUDINARY_CLOUD_NAME || "Not set"
+);
+console.log("CLOUDINARY_API_KEY:", process.env.CLOUDINARY_API_KEY || "Not set");
+console.log(
+  "CLOUDINARY_API_SECRET:",
+  process.env.CLOUDINARY_API_SECRET ? "Set" : "Not set"
+);
+
+// Додаємо fileUpload middleware
 app.use(fileUpload());
 
-// Конфигурация Cloudinary
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-});
+// Конфігурація Cloudinary
+try {
+  // Спочатку перевіряємо CLOUDINARY_URL
+  if (process.env.CLOUDINARY_URL) {
+    console.log("Configuring Cloudinary with CLOUDINARY_URL");
+    cloudinary.config({ cloudinary_url: process.env.CLOUDINARY_URL });
+  } else if (
+    process.env.CLOUDINARY_CLOUD_NAME &&
+    process.env.CLOUDINARY_API_KEY &&
+    process.env.CLOUDINARY_API_SECRET
+  ) {
+    // Якщо CLOUDINARY_URL немає, використовуємо окремі змінні
+    console.log("Configuring Cloudinary with individual credentials");
+    cloudinary.config({
+      cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+      api_key: process.env.CLOUDINARY_API_KEY,
+      api_secret: process.env.CLOUDINARY_API_SECRET,
+    });
+  } else {
+    throw new Error(
+      "Cloudinary configuration missing: Provide CLOUDINARY_URL or individual credentials"
+    );
+  }
+  // Перевіряємо конфігурацію
+  console.log("Cloudinary configuration:", {
+    cloud_name: cloudinary.config().cloud_name,
+    api_key: cloudinary.config().api_key,
+    api_secret: cloudinary.config().api_secret ? "Set" : "Not set",
+  });
+} catch (error) {
+  console.error("Cloudinary configuration error:", error.message);
+}
 
 // Middleware
 app.use(cors());
 app.use(express.json());
 
-// Обслуживание статических файлов
-app.use(express.static(path.join(__dirname, "../public"))); // Путь к project/public
+// Обслуговування статичних файлів
+app.use(express.static(path.join(__dirname, "../public")));
 
-// Маршрут для главной страницы
+// Маршрут для головної сторінки
 app.get("/", (req, res) => {
   const indexPath = path.join(__dirname, "../public", "index.html");
   res.sendFile(indexPath, (err) => {
@@ -43,10 +79,10 @@ app.get("/", (req, res) => {
   });
 });
 
-// Подключаем маршруты авторизации
+// Підключаємо маршрути авторизації
 app.use("/api/auth", authRoutes);
 
-// Маршрут для загрузки фото на Cloudinary
+// Маршрут для завантаження фото на Cloudinary
 app.post("/api/auth/upload-photo", async (req, res) => {
   try {
     const token = req.headers.authorization?.split(" ")[1];
@@ -97,7 +133,7 @@ app.post("/api/auth/upload-photo", async (req, res) => {
 
     res.json({ photoUrl });
   } catch (error) {
-    console.error("Помилка в /api/auth/upload-photo:", error);
+    console.error("Помилка в /api/auth/upload-photo:", error.message);
     if (error.name === "JsonWebTokenError") {
       return res.status(401).json({ error: "Недійсний токен" });
     }
@@ -107,13 +143,13 @@ app.post("/api/auth/upload-photo", async (req, res) => {
   }
 });
 
-// Глобальный обработчик ошибок
+// Глобальний обробник помилок
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({ error: "Внутрішня помилка сервера" });
 });
 
-// Подключение к MongoDB
+// Підключення до MongoDB
 mongoose
   .connect(process.env.MONGO_URI)
   .then(() => console.log("Connected to MongoDB"))
