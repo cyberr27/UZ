@@ -1,4 +1,120 @@
 document.addEventListener("DOMContentLoaded", () => {
+  // Функция для проверки авторизации и получения данных пользователя
+  const checkAuth = async () => {
+    const token = localStorage.getItem("token");
+    const loginFormContainer = document.getElementById("login-form");
+    const profileContainer = document.getElementById("profile");
+    const profileEditContainer = document.getElementById(
+      "profile-edit-container"
+    );
+    const body = document.body;
+
+    if (!token) {
+      loginFormContainer.classList.remove("hidden");
+      profileContainer.classList.add("hidden");
+      profileEditContainer.classList.add("hidden");
+      body.classList.remove("profile-active");
+      return;
+    }
+
+    try {
+      const response = await fetch("/api/auth/me", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const data = await response.json();
+      if (response.ok) {
+        // Обновляем данные профиля
+        document.getElementById("profile-firstName").textContent =
+          data.user.firstName || "Не вказано";
+        document.getElementById("profile-lastName").textContent =
+          data.user.lastName || "Не вказано";
+        document.getElementById("profile-middleName").textContent =
+          data.user.middleName || "Не вказано";
+        document.getElementById("profile-position").textContent =
+          data.user.position || "Не вказано";
+        document.getElementById("profile-employeeId").textContent =
+          data.user.employeeId || "Не вказано";
+
+        // Обновление фото профиля или заглушки
+        const profilePhoto = document.getElementById("profile-photo");
+        const placeholder = document.getElementById(
+          "profile-photo-placeholder"
+        );
+        if (data.user.photo) {
+          profilePhoto.src = data.user.photo;
+          profilePhoto.classList.remove("hidden");
+          placeholder.classList.add("hidden");
+          profilePhoto.onerror = () => {
+            console.error("Помилка завантаження зображення:", data.user.photo);
+            const initials = `${data.user.firstName?.charAt(0) || ""}${
+              data.user.lastName?.charAt(0) || ""
+            }`.toUpperCase();
+            placeholder.textContent = initials || "НВ";
+            placeholder.classList.remove("hidden");
+            profilePhoto.classList.add("hidden");
+          };
+        } else {
+          const initials = `${data.user.firstName?.charAt(0) || ""}${
+            data.user.lastName?.charAt(0) || ""
+          }`.toUpperCase();
+          placeholder.textContent = initials || "НВ";
+          placeholder.classList.remove("hidden");
+          profilePhoto.classList.add("hidden");
+        }
+
+        // Заполнение формы редактирования
+        document.getElementById("edit-firstName").value =
+          data.user.firstName || "";
+        document.getElementById("edit-lastName").value =
+          data.user.lastName || "";
+        document.getElementById("edit-middleName").value =
+          data.user.middleName || "";
+        document.getElementById("edit-position").value =
+          data.user.position || "";
+        document.getElementById("edit-employeeId").value =
+          data.user.employeeId || "";
+
+        // Показываем профиль или форму редактирования
+        if (
+          !data.user.firstName &&
+          !data.user.lastName &&
+          !data.user.middleName &&
+          !data.user.position &&
+          !data.user.employeeId
+        ) {
+          loginFormContainer.classList.add("hidden");
+          profileEditContainer.classList.remove("hidden");
+          body.classList.add("profile-active");
+        } else {
+          loginFormContainer.classList.add("hidden");
+          profileContainer.classList.remove("hidden");
+          body.classList.add("profile-active");
+        }
+      } else {
+        alert(data.error || "Помилка авторизації");
+        localStorage.removeItem("token");
+        loginFormContainer.classList.remove("hidden");
+        profileContainer.classList.add("hidden");
+        profileEditContainer.classList.add("hidden");
+        body.classList.remove("profile-active");
+      }
+    } catch (error) {
+      console.error("Помилка перевірки авторизації:", error);
+      alert("Помилка перевірки авторизації: " + error.message);
+      localStorage.removeItem("token");
+      loginFormContainer.classList.remove("hidden");
+      profileContainer.classList.add("hidden");
+      profileEditContainer.classList.add("hidden");
+      body.classList.remove("profile-active");
+    }
+  };
+
+  // Вызываем проверку авторизации при загрузке страницы
+  checkAuth();
   const loginForm = document.getElementById("login");
   const registerForm = document.getElementById("register");
   const profileEditForm = document.getElementById("profile-edit");
@@ -245,7 +361,7 @@ document.addEventListener("DOMContentLoaded", () => {
           "profile-photo-placeholder"
         );
         if (data.user.photo) {
-          profilePhoto.src = data.user.photo;
+          profilePhoto.src = `${data.user.photo}?t=${Date.now()}`; // Добавляем временную метку
           profilePhoto.classList.remove("hidden");
           placeholder.classList.add("hidden");
           profilePhoto.onerror = () => {
