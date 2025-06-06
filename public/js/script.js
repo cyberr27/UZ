@@ -47,11 +47,14 @@ document.addEventListener("DOMContentLoaded", () => {
           "profile-photo-placeholder"
         );
         if (data.user.photo) {
-          profilePhoto.src = data.user.photo;
+          const photoUrl = `${data.user.photo}?t=${Date.now()}`; // Додаємо параметр часу для уникнення кешу
+          profilePhoto.src = photoUrl;
           profilePhoto.classList.remove("hidden");
           placeholder.classList.add("hidden");
           profilePhoto.onerror = () => {
-            console.error("Помилка завантаження зображення:", data.user.photo);
+            console.error(
+              `Помилка завантаження зображення: ${photoUrl}. Перевірте, чи файл існує в /public/uploads/`
+            );
             const initials = `${data.user.firstName?.charAt(0) || ""}${
               data.user.lastName?.charAt(0) || ""
             }`.toUpperCase();
@@ -220,17 +223,19 @@ document.addEventListener("DOMContentLoaded", () => {
           data.user.workerId || "Не вказано";
 
         // Установка фото профиля или заглушки
-        const photo = data.user.photo;
         const profilePhoto = document.getElementById("profile-photo");
         const placeholder = document.getElementById(
           "profile-photo-placeholder"
         );
-        if (photo) {
-          profilePhoto.src = photo;
+        if (data.user.photo) {
+          const photoUrl = `${data.user.photo}?t=${Date.now()}`; // Додаємо параметр часу
+          profilePhoto.src = photoUrl;
           profilePhoto.classList.remove("hidden");
           placeholder.classList.add("hidden");
           profilePhoto.onerror = () => {
-            console.error("Помилка завантаження зображення:", photo);
+            console.error(
+              `Помилка завантаження зображення: ${photoUrl}. Перевірте, чи файл існує в /public/uploads/`
+            );
             const initials = `${data.user.firstName?.charAt(0) || ""}${
               data.user.lastName?.charAt(0) || ""
             }`.toUpperCase();
@@ -367,11 +372,14 @@ document.addEventListener("DOMContentLoaded", () => {
           "profile-photo-placeholder"
         );
         if (data.user.photo) {
-          profilePhoto.src = `${data.user.photo}?t=${Date.now()}`;
+          const photoUrl = `${data.user.photo}?t=${Date.now()}`; // Додаємо параметр часу
+          profilePhoto.src = photoUrl;
           profilePhoto.classList.remove("hidden");
           placeholder.classList.add("hidden");
           profilePhoto.onerror = () => {
-            console.error("Помилка завантаження зображення:", data.user.photo);
+            console.error(
+              `Помилка завантаження зображення: ${photoUrl}. Перевірте, чи файл існує в /public/uploads/`
+            );
             const initials = `${data.user.firstName?.charAt(0) || ""}${
               data.user.lastName?.charAt(0) || ""
             }`.toUpperCase();
