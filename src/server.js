@@ -1,41 +1,26 @@
+const fileUpload = require("express-fileupload");
+app.use(fileUpload());
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 const dotenv = require("dotenv");
 const authRoutes = require("./routes/auth"); // Путь относительно src
 const path = require("path");
-const multer = require("multer");
 const jwt = require("jsonwebtoken");
+const cloudinary = require("cloudinary").v2;
 
-// Импортируем модель User один раз в начале файла
+// Импортируем модель User
 const User = require("./models/User"); // Путь относительно src
 
 // Настраиваем загрузку переменных окружения
 dotenv.config();
 const app = express();
 
-// Конфигурация Multer для загрузки файлов
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const uploadPath = path.join(__dirname, "../public/uploads/"); // Поднимаемся на уровень выше из src к project
-    // Проверяем существование директории, если нет — создаем
-    require("fs").mkdirSync(uploadPath, { recursive: true });
-    cb(null, uploadPath);
-  },
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + "-" + file.originalname);
-  },
-});
-
-const upload = multer({
-  storage,
-  fileFilter: (req, file, cb) => {
-    if (!file.mimetype.startsWith("image/")) {
-      return cb(new Error("Тільки зображення дозволені!"));
-    }
-    cb(null, true);
-  },
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+// Конфигурация Cloudinary
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
 // Middleware
@@ -47,7 +32,7 @@ app.use(express.static(path.join(__dirname, "../public"))); // Путь к proje
 
 // Маршрут для главной страницы
 app.get("/", (req, res) => {
-  const indexPath = path.join(__dirname, "../public", "index.html"); // Путь к project/public/index.html
+  const indexPath = path.join(__dirname, "../public", "index.html");
   res.sendFile(indexPath, (err) => {
     if (err) {
       console.error("Помилка відправки index.html:", err);
@@ -59,8 +44,8 @@ app.get("/", (req, res) => {
 // Подключаем маршруты авторизации
 app.use("/api/auth", authRoutes);
 
-// Маршрут для загрузки фото
-app.post("/api/auth/upload-photo", upload.single("photo"), async (req, res) => {
+// Маршрут для загрузки фото на Cloudinary
+app.post("/api/auth/upload-photo", async (req, res) => {
   try {
     const token = req.headers.authorization?.split(" ")[1];
     if (!token) {
@@ -68,31 +53,54 @@ app.post("/api/auth/upload-photo", upload.single("photo"), async (req, res) => {
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    if (!req.file) {
+    if (!req.files || !req.files.photo) {
       return res.status(400).json({ error: "Файл не завантажено" });
     }
 
-    const photoUrl = `/uploads/${req.file.filename}`;
-    const user = await User.findByIdAndUpdate(
-      decoded.userId,
-      { photo: photoUrl },
-      { new: true }
-    );
-
-    if (!user) {
-      return res.status(404).json({ error: "Користувача не знайдено" });
+    const file = req.files.photo;
+    if (!file.mimetype.startsWith("image/")) {
+      return res.status(400).json({ error: "Тільки зображення дозволені!" });
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      return res
+        .status(400)
+        .json({ error: "Файл занадто великий (макс. 5MB)" });
     }
 
-    res.json({ photoUrl });
+    // Завантаження на Cloudinary
+    const result = await cloudinary.uploader
+      .upload_stream(
+        {
+          folder: "profile_photos", // Папка в Cloudinary
+          resource_type: "image",
+        },
+        async (error, result) => {
+          if (error) {
+            console.error("Помилка завантаження на Cloudinary:", error);
+            return res
+              .status(500)
+              .json({ error: "Помилка завантаження фото: " + error.message });
+          }
+
+          const photoUrl = result.secure_url;
+          const user = await User.findByIdAndUpdate(
+            decoded.userId,
+            { photo: photoUrl },
+            { new: true }
+          );
+
+          if (!user) {
+            return res.status(404).json({ error: "Користувача не знайдено" });
+          }
+
+          res.json({ photoUrl });
+        }
+      )
+      .end(file.data);
   } catch (error) {
     console.error("Помилка в /api/auth/upload-photo:", error);
     if (error.name === "JsonWebTokenError") {
       return res.status(401).json({ error: "Недійсний токен" });
-    }
-    if (error instanceof multer.MulterError) {
-      return res
-        .status(400)
-        .json({ error: "Помилка завантаження: " + error.message });
     }
     res
       .status(500)

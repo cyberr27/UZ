@@ -310,14 +310,15 @@ document.addEventListener("DOMContentLoaded", () => {
         }
         const uploadResponse = await fetch("/api/auth/upload-photo", {
           method: "POST",
-          headers: { Authorization: `Bearer ${token}` },
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
           body: formData,
         });
         const uploadData = await uploadResponse.json();
         if (uploadResponse.ok) {
           photo = uploadData.photoUrl;
-          // Сбрасываем поле файла после успешной загрузки
-          photoInput.value = "";
+          photoInput.value = ""; // Сбрасываем поле файла
         } else {
           alert(uploadData.error || "Помилка завантаження фото");
           return;
@@ -372,13 +373,13 @@ document.addEventListener("DOMContentLoaded", () => {
           "profile-photo-placeholder"
         );
         if (data.user.photo) {
-          const photoUrl = `${data.user.photo}?t=${Date.now()}`; // Додаємо параметр часу
+          const photoUrl = `${data.user.photo}?t=${Date.now()}`;
           profilePhoto.src = photoUrl;
           profilePhoto.classList.remove("hidden");
           placeholder.classList.add("hidden");
           profilePhoto.onerror = () => {
             console.error(
-              `Помилка завантаження зображення: ${photoUrl}. Перевірте, чи файл існує в /public/uploads/`
+              `Помилка завантаження зображення: ${photoUrl}. Перевірте URL Cloudinary`
             );
             const initials = `${data.user.firstName?.charAt(0) || ""}${
               data.user.lastName?.charAt(0) || ""
