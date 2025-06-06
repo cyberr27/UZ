@@ -1,5 +1,3 @@
-const fileUpload = require("express-fileupload");
-app.use(fileUpload());
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
@@ -8,13 +6,17 @@ const authRoutes = require("./routes/auth"); // Путь относительн�
 const path = require("path");
 const jwt = require("jsonwebtoken");
 const cloudinary = require("cloudinary").v2;
+const fileUpload = require("express-fileupload"); // Імпортуємо fileUpload
 
 // Импортируем модель User
 const User = require("./models/User"); // Путь относительно src
 
 // Настраиваем загрузку переменных окружения
 dotenv.config();
-const app = express();
+const app = express(); // Ініціалізуємо app
+
+// Додаємо fileUpload middleware ПІСЛЯ ініціалізації app
+app.use(fileUpload());
 
 // Конфигурация Cloudinary
 cloudinary.config({
@@ -68,35 +70,32 @@ app.post("/api/auth/upload-photo", async (req, res) => {
     }
 
     // Завантаження на Cloudinary
-    const result = await cloudinary.uploader
-      .upload_stream(
+    const result = await new Promise((resolve, reject) => {
+      const uploadStream = cloudinary.uploader.upload_stream(
         {
-          folder: "profile_photos", // Папка в Cloudinary
+          folder: "profile_photos",
           resource_type: "image",
         },
-        async (error, result) => {
-          if (error) {
-            console.error("Помилка завантаження на Cloudinary:", error);
-            return res
-              .status(500)
-              .json({ error: "Помилка завантаження фото: " + error.message });
-          }
-
-          const photoUrl = result.secure_url;
-          const user = await User.findByIdAndUpdate(
-            decoded.userId,
-            { photo: photoUrl },
-            { new: true }
-          );
-
-          if (!user) {
-            return res.status(404).json({ error: "Користувача не знайдено" });
-          }
-
-          res.json({ photoUrl });
+        (error, result) => {
+          if (error) reject(error);
+          else resolve(result);
         }
-      )
-      .end(file.data);
+      );
+      uploadStream.end(file.data);
+    });
+
+    const photoUrl = result.secure_url;
+    const user = await User.findByIdAndUpdate(
+      decoded.userId,
+      { photo: photoUrl },
+      { new: true }
+    );
+
+    if (!user) {
+      return res.status(404).json({ error: "Користувача не знайдено" });
+    }
+
+    res.json({ photoUrl });
   } catch (error) {
     console.error("Помилка в /api/auth/upload-photo:", error);
     if (error.name === "JsonWebTokenError") {
