@@ -131,6 +131,10 @@ document.addEventListener("DOMContentLoaded", () => {
   const loadChatUsers = async (currentUserId) => {
     try {
       const token = localStorage.getItem("token");
+      if (!token) {
+        alert("Токен відсутній. Будь ласка, увійдіть знову.");
+        return;
+      }
       const response = await fetch("/api/chat/users", {
         method: "GET",
         headers: {
@@ -138,24 +142,26 @@ document.addEventListener("DOMContentLoaded", () => {
           Authorization: `Bearer ${token}`,
         },
       });
-      const data = await response.json();
-      if (response.ok) {
-        const select = document.getElementById("chat-user-select");
-        select.innerHTML = '<option value="">Оберіть користувача</option>';
-        data.users.forEach((user) => {
-          if (user.workerId !== currentUserId) {
-            const option = document.createElement("option");
-            option.value = user.workerId;
-            option.textContent = `${user.firstName} ${user.lastName} (ID: ${user.workerId})`;
-            select.appendChild(option);
-          }
-        });
-      } else {
-        alert(data.error || "Помилка завантаження користувачів");
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Помилка завантаження користувачів");
       }
+      const data = await response.json();
+      const select = document.getElementById("chat-user-select");
+      select.innerHTML = '<option value="">Оберіть користувача</option>';
+      data.users.forEach((user) => {
+        if (user.workerId !== currentUserId) {
+          const option = document.createElement("option");
+          option.value = user.workerId;
+          option.textContent = `${user.firstName || "Невідомо"} ${
+            user.lastName || "Невідомо"
+          } (ID: ${user.workerId})`;
+          select.appendChild(option);
+        }
+      });
     } catch (error) {
       console.error("Помилка завантаження користувачів:", error);
-      alert("Помилка: " + error.message);
+      alert("Помилка завантаження користувачів: " + error.message);
     }
   };
 

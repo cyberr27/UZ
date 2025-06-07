@@ -7,6 +7,7 @@ const path = require("path");
 const jwt = require("jsonwebtoken");
 const cloudinary = require("cloudinary").v2;
 const fileUpload = require("express-fileupload");
+const chatRoutes = require("./routes/chat");
 
 const User = require("./models/User");
 
@@ -58,6 +59,7 @@ app.get("/", (req, res) => {
 
 // Підключаємо маршрути авторизації
 app.use("/api/auth", authRoutes);
+app.use("/api/chat", chatRoutes);
 
 // Маршрут для завантаження фото на Cloudinary
 app.post("/api/auth/upload-photo", async (req, res) => {
