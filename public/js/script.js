@@ -7,12 +7,14 @@ document.addEventListener("DOMContentLoaded", () => {
     const profileEditContainer = document.getElementById(
       "profile-edit-container"
     );
+    const chatContainer = document.getElementById("chat-container");
     const body = document.body;
 
     if (!token) {
       loginFormContainer.classList.remove("hidden");
       profileContainer.classList.add("hidden");
       profileEditContainer.classList.add("hidden");
+      chatContainer.classList.add("hidden");
       body.classList.remove("profile-active");
       return;
     }
@@ -47,7 +49,7 @@ document.addEventListener("DOMContentLoaded", () => {
           "profile-photo-placeholder"
         );
         if (data.user.photo) {
-          const photoUrl = `${data.user.photo}?t=${Date.now()}`; // Додаємо параметр часу для уникнення кешу
+          const photoUrl = `${data.user.photo}?t=${Date.now()}`;
           profilePhoto.src = photoUrl;
           profilePhoto.classList.remove("hidden");
           placeholder.classList.add("hidden");
@@ -83,6 +85,9 @@ document.addEventListener("DOMContentLoaded", () => {
         document.getElementById("edit-employeeId").value =
           data.user.employeeId || "";
 
+        // Загрузка списка пользователей для чата
+        await loadChatUsers(data.user.workerId);
+
         // Показываем профиль или форму редактирования
         if (
           !data.user.firstName &&
@@ -93,10 +98,12 @@ document.addEventListener("DOMContentLoaded", () => {
         ) {
           loginFormContainer.classList.add("hidden");
           profileEditContainer.classList.remove("hidden");
+          chatContainer.classList.add("hidden");
           body.classList.add("profile-active");
         } else {
           loginFormContainer.classList.add("hidden");
           profileContainer.classList.remove("hidden");
+          chatContainer.classList.add("hidden");
           body.classList.add("profile-active");
         }
       } else {
@@ -105,6 +112,7 @@ document.addEventListener("DOMContentLoaded", () => {
         loginFormContainer.classList.remove("hidden");
         profileContainer.classList.add("hidden");
         profileEditContainer.classList.add("hidden");
+        chatContainer.classList.add("hidden");
         body.classList.remove("profile-active");
       }
     } catch (error) {
@@ -114,12 +122,87 @@ document.addEventListener("DOMContentLoaded", () => {
       loginFormContainer.classList.remove("hidden");
       profileContainer.classList.add("hidden");
       profileEditContainer.classList.add("hidden");
+      chatContainer.classList.add("hidden");
       body.classList.remove("profile-active");
+    }
+  };
+
+  // Функция для загрузки списка пользователей для чата
+  const loadChatUsers = async (currentUserId) => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch("/api/chat/users", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const data = await response.json();
+      if (response.ok) {
+        const select = document.getElementById("chat-user-select");
+        select.innerHTML = '<option value="">Оберіть користувача</option>';
+        data.users.forEach((user) => {
+          if (user.workerId !== currentUserId) {
+            const option = document.createElement("option");
+            option.value = user.workerId;
+            option.textContent = `${user.firstName} ${user.lastName} (ID: ${user.workerId})`;
+            select.appendChild(option);
+          }
+        });
+      } else {
+        alert(data.error || "Помилка завантаження користувачів");
+      }
+    } catch (error) {
+      console.error("Помилка завантаження користувачів:", error);
+      alert("Помилка: " + error.message);
+    }
+  };
+
+  // Функция для загрузки сообщений чата
+  const loadMessages = async (recipientId) => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch(
+        `/api/chat/messages?recipientId=${recipientId}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      const data = await response.json();
+      if (response.ok) {
+        const chatMessages = document.getElementById("chat-messages");
+        chatMessages.innerHTML = "";
+        data.messages.forEach((message) => {
+          const messageDiv = document.createElement("div");
+          messageDiv.classList.add("message");
+          const senderName = message.sender.firstName || "Користувач";
+          const senderLastName = message.sender.lastName || "";
+          const isSent = message.senderId === localStorage.getItem("userId");
+          messageDiv.classList.add(isSent ? "sent" : "received");
+          messageDiv.innerHTML = `
+                  <p class="text-sm">${senderName} ${senderLastName} (${message.timestamp}):</p>
+                  <p>${message.text}</p>
+                `;
+          chatMessages.appendChild(messageDiv);
+        });
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+      } else {
+        alert(data.error || "Помилка завантаження повідомлень");
+      }
+    } catch (error) {
+      console.error("Помилка завантаження повідомлень:", error);
+      alert("Помилка: " + error.message);
     }
   };
 
   // Вызываем проверку авторизации при загрузке страницы
   checkAuth();
+
   const loginForm = document.getElementById("login");
   const registerForm = document.getElementById("register");
   const profileEditForm = document.getElementById("profile-edit");
@@ -129,22 +212,32 @@ document.addEventListener("DOMContentLoaded", () => {
     "profile-edit-container"
   );
   const profileContainer = document.getElementById("profile");
+  const chatContainer = document.getElementById("chat-container");
   const showRegister = document.getElementById("show-register");
   const showLogin = document.getElementById("show-login");
   const logoutButton = document.getElementById("logout");
   const editProfileBtn = document.getElementById("edit-profile-btn");
+  const backToProfileBtn = document.getElementById("back-to-profile");
+  const chatBtn = document.getElementById("chat-btn");
+  const backToProfileFromChatBtn = document.getElementById(
+    "back-to-profile-from-chat"
+  );
+  const sendMessageBtn = document.getElementById("send-message-btn");
+  const chatUserSelect = document.getElementById("chat-user-select");
   const body = document.body;
 
   // Переключение между формами входа и регистрации
   showRegister.addEventListener("click", () => {
     loginFormContainer.classList.add("hidden");
     registerFormContainer.classList.remove("hidden");
+    chatContainer.classList.add("hidden");
     body.classList.remove("profile-active");
   });
 
   showLogin.addEventListener("click", () => {
     registerFormContainer.classList.add("hidden");
     loginFormContainer.classList.remove("hidden");
+    chatContainer.classList.add("hidden");
     body.classList.remove("profile-active");
   });
 
@@ -180,6 +273,7 @@ document.addEventListener("DOMContentLoaded", () => {
         alert("Реєстрація успішна! Будь ласка, увійдіть.");
         registerFormContainer.classList.add("hidden");
         loginFormContainer.classList.remove("hidden");
+        chatContainer.classList.add("hidden");
         body.classList.remove("profile-active");
       } else {
         alert(data.error || "Помилка реєстрації");
@@ -209,6 +303,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const data = await response.json();
       if (response.ok) {
         localStorage.setItem("token", data.token);
+        localStorage.setItem("userId", data.user.workerId);
         document.getElementById("profile-firstName").textContent =
           data.user.firstName || "Не вказано";
         document.getElementById("profile-lastName").textContent =
@@ -228,7 +323,7 @@ document.addEventListener("DOMContentLoaded", () => {
           "profile-photo-placeholder"
         );
         if (data.user.photo) {
-          const photoUrl = `${data.user.photo}?t=${Date.now()}`; // Додаємо параметр часу
+          const photoUrl = `${data.user.photo}?t=${Date.now()}`;
           profilePhoto.src = photoUrl;
           profilePhoto.classList.remove("hidden");
           placeholder.classList.add("hidden");
@@ -273,10 +368,12 @@ document.addEventListener("DOMContentLoaded", () => {
         ) {
           loginFormContainer.classList.add("hidden");
           profileEditContainer.classList.remove("hidden");
+          chatContainer.classList.add("hidden");
           body.classList.add("profile-active");
         } else {
           loginFormContainer.classList.add("hidden");
           profileContainer.classList.remove("hidden");
+          chatContainer.classList.add("hidden");
           body.classList.add("profile-active");
         }
       } else {
@@ -399,6 +496,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         profileEditContainer.classList.add("hidden");
         profileContainer.classList.remove("hidden");
+        chatContainer.classList.add("hidden");
         body.classList.add("profile-active");
       } else {
         alert(data.error || "Помилка оновлення профілю");
@@ -413,14 +511,93 @@ document.addEventListener("DOMContentLoaded", () => {
   editProfileBtn.addEventListener("click", () => {
     profileContainer.classList.add("hidden");
     profileEditContainer.classList.remove("hidden");
+    chatContainer.classList.add("hidden");
     body.classList.add("profile-active");
+  });
+
+  // Повернення до профілю з формы редагування
+  backToProfileBtn.addEventListener("click", () => {
+    profileEditContainer.classList.add("hidden");
+    profileContainer.classList.remove("hidden");
+    chatContainer.classList.add("hidden");
+    body.classList.add("profile-active");
+  });
+
+  // Показ чата
+  chatBtn.addEventListener("click", () => {
+    profileContainer.classList.add("hidden");
+    profileEditContainer.classList.add("hidden");
+    chatContainer.classList.remove("hidden");
+    body.classList.add("profile-active");
+  });
+
+  // Повернення до профілю з чата
+  backToProfileFromChatBtn.addEventListener("click", () => {
+    chatContainer.classList.add("hidden");
+    profileContainer.classList.remove("hidden");
+    profileEditContainer.classList.add("hidden");
+    body.classList.add("profile-active");
+  });
+
+  // Выбор пользователя для чата
+  chatUserSelect.addEventListener("change", (e) => {
+    const recipientId = e.target.value;
+    if (recipientId) {
+      loadMessages(recipientId);
+    } else {
+      document.getElementById("chat-messages").innerHTML = "";
+    }
+  });
+
+  // Отправка сообщения
+  sendMessageBtn.addEventListener("click", async () => {
+    const recipientId = chatUserSelect.value;
+    const messageText = document
+      .getElementById("chat-message-input")
+      .value.trim();
+
+    if (!recipientId) {
+      alert("Будь ласка, оберіть користувача");
+      return;
+    }
+    if (!messageText) {
+      alert("Будь ласка, введіть повідомлення");
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch("/api/chat/send", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          recipientId,
+          text: messageText,
+        }),
+      });
+      const data = await response.json();
+      if (response.ok) {
+        document.getElementById("chat-message-input").value = "";
+        loadMessages(recipientId);
+      } else {
+        alert(data.error || "Помилка надсилання повідомлення");
+      }
+    } catch (error) {
+      console.error("Помилка надсилання повідомлення:", error);
+      alert("Помилка: " + error.message);
+    }
   });
 
   // Обработка выхода
   logoutButton.addEventListener("click", () => {
     localStorage.removeItem("token");
+    localStorage.removeItem("userId");
     profileContainer.classList.add("hidden");
     profileEditContainer.classList.add("hidden");
+    chatContainer.classList.add("hidden");
     loginFormContainer.classList.remove("hidden");
     body.classList.remove("profile-active");
   });

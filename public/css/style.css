@@ -48,7 +48,8 @@ body.profile-active #auth-container {
   max-width: 500px;
 }
 
-#profile {
+#profile,
+#chat-container {
   width: 100%;
   height: 100%;
   background: rgba(255, 255, 255, 0.95);
@@ -74,10 +75,10 @@ button:hover {
   height: 5%;
   font-size: 10px;
   padding: 0;
-  bottom: 8%;
 }
 
-#edit-profile-btn {
+#edit-profile-btn,
+#chat-btn {
   position: absolute;
   right: 7.5%;
   top: 11%;
@@ -204,6 +205,34 @@ input:focus {
   border-color: #3b82f6;
 }
 
+#chat-messages {
+  height: 70vh;
+  overflow-y: auto;
+  padding: 1rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background-color: #f9fafb;
+}
+
+.message {
+  margin-bottom: 1rem;
+  padding: 0.5rem;
+  border-radius: 8px;
+  max-width: 70%;
+}
+
+.message.sent {
+  background-color: #3b82f6;
+  color: white;
+  margin-left: auto;
+}
+
+.message.received {
+  background-color: #e5e7eb;
+  color: black;
+  margin-right: auto;
+}
+
 @media (max-width: 640px) {
   #auth-container {
     max-width: 90%;
@@ -214,7 +243,8 @@ input:focus {
     padding: 1.5rem;
   }
 
-  #profile {
+  #profile,
+  #chat-container {
     max-width: 95%;
     padding: 1.5rem;
   }
