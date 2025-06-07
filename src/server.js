@@ -15,42 +15,16 @@ const app = express();
 
 // Логування змінних середовища для діагностики
 console.log("CLOUDINARY_URL:", process.env.CLOUDINARY_URL ? "Set" : "Not set");
-console.log(
-  "CLOUDINARY_CLOUD_NAME:",
-  process.env.CLOUDINARY_CLOUD_NAME || "Not set"
-);
-console.log("CLOUDINARY_API_KEY:", process.env.CLOUDINARY_API_KEY || "Not set");
-console.log(
-  "CLOUDINARY_API_SECRET:",
-  process.env.CLOUDINARY_API_SECRET ? "Set" : "Not set"
-);
 
-// Додаємо fileUpload middleware
-app.use(fileUpload());
-
-// Конфігурація Cloudinary
+// Конфігурація Cloudinary виключно через CLOUDINARY_URL
 try {
-  // Спочатку перевіряємо CLOUDINARY_URL
-  if (process.env.CLOUDINARY_URL) {
-    console.log("Configuring Cloudinary with CLOUDINARY_URL");
-    cloudinary.config({ cloudinary_url: process.env.CLOUDINARY_URL });
-  } else if (
-    process.env.CLOUDINARY_CLOUD_NAME &&
-    process.env.CLOUDINARY_API_KEY &&
-    process.env.CLOUDINARY_API_SECRET
-  ) {
-    // Якщо CLOUDINARY_URL немає, використовуємо окремі змінні
-    console.log("Configuring Cloudinary with individual credentials");
-    cloudinary.config({
-      cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-      api_key: process.env.CLOUDINARY_API_KEY,
-      api_secret: process.env.CLOUDINARY_API_SECRET,
-    });
-  } else {
-    throw new Error(
-      "Cloudinary configuration missing: Provide CLOUDINARY_URL or individual credentials"
-    );
+  if (!process.env.CLOUDINARY_URL) {
+    throw new Error("CLOUDINARY_URL is not set in environment variables");
   }
+  console.log("Configuring Cloudinary with CLOUDINARY_URL");
+  cloudinary.config({
+    cloudinary_url: process.env.CLOUDINARY_URL,
+  });
   // Перевіряємо конфігурацію
   console.log("Cloudinary configuration:", {
     cloud_name: cloudinary.config().cloud_name,
@@ -59,9 +33,12 @@ try {
   });
 } catch (error) {
   console.error("Cloudinary configuration error:", error.message);
+  // Вирішуй, чи зупиняти сервер, чи продовжувати без Cloudinary
+  // Наприклад, можна не зупиняти, але попередити, що завантаження фото не працюватиме
 }
 
 // Middleware
+app.use(fileUpload());
 app.use(cors());
 app.use(express.json());
 
@@ -74,7 +51,7 @@ app.get("/", (req, res) => {
   res.sendFile(indexPath, (err) => {
     if (err) {
       console.error("Помилка відправки index.html:", err);
-      res.status(500).json({ error: "Не вдалося завантажити сторінку" });
+      res.status(500).json({ error: "Не вдалося завантажити сторінку sixth" });
     }
   });
 });
