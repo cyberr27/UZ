@@ -424,4 +424,12 @@ document.addEventListener("DOMContentLoaded", () => {
     loginFormContainer.classList.remove("hidden");
     body.classList.remove("profile-active");
   });
+
+  // Обработка кнопки "Повернутися"
+  const backToProfileBtn = document.getElementById("back-to-profile");
+  backToProfileBtn.addEventListener("click", () => {
+    profileEditContainer.classList.add("hidden");
+    profileContainer.classList.remove("hidden");
+    body.classList.add("profile-active");
+  });
 });

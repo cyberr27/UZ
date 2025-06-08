@@ -87,6 +87,14 @@ button:hover {
   padding: 0;
 }
 
+#back-to-profile {
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+#back-to-profile:hover {
+  transform: translateY(-2px);
+}
+
 .hidden {
   display: none;
 }
