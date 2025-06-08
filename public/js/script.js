@@ -134,7 +134,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!token) return;
 
     // Подключаемся к WebSocket с токеном для аутентификации
-    ws = new WebSocket(`ws://${window.location.host}/ws?token=${token}`);
+    ws = new WebSocket(`wss://${window.location.host}/ws?token=${token}`);
 
     ws.onopen = () => {
       console.log("WebSocket подключен");

@@ -7,14 +7,14 @@ const path = require("path");
 const jwt = require("jsonwebtoken");
 const cloudinary = require("cloudinary").v2;
 const fileUpload = require("express-fileupload");
-const { WebSocketServer } = require("ws"); // Правильный импорт WebSocketServer
-const http = require("http"); // Добавляем http для создания сервера
+const { WebSocketServer } = require("ws");
+const http = require("http");
 
 const User = require("./models/User");
 
 dotenv.config();
 const app = express();
-const server = http.createServer(app); // Создаем HTTP-сервер
+const server = http.createServer(app);
 
 // Логування змінних середовища для діагностики
 console.log("CLOUDINARY_URL:", process.env.CLOUDINARY_URL ? "Set" : "Not set");
@@ -43,11 +43,12 @@ app.use(cors());
 app.use(express.json());
 
 // Обслуговування статичних файлів
-app.use(express.static(path.join(__dirname, "public"))); // Убедись, что папка public в корне проекта
+// Указываем путь к папке public в корне проекта
+app.use(express.static(path.join(__dirname, "..", "public")));
 
 // Маршрут для головної сторінки
 app.get("/", (req, res) => {
-  const indexPath = path.join(__dirname, "public", "index.html");
+  const indexPath = path.join(__dirname, "..", "public", "index.html");
   res.sendFile(indexPath, (err) => {
     if (err) {
       console.error("Помилка відправки index.html:", err);
