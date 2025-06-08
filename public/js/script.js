@@ -7,12 +7,14 @@ document.addEventListener("DOMContentLoaded", () => {
     const profileEditContainer = document.getElementById(
       "profile-edit-container"
     );
+    const chatContainer = document.getElementById("chat");
     const body = document.body;
 
     if (!token) {
       loginFormContainer.classList.remove("hidden");
       profileContainer.classList.add("hidden");
       profileEditContainer.classList.add("hidden");
+      chatContainer.classList.add("hidden");
       body.classList.remove("profile-active");
       return;
     }
@@ -47,7 +49,7 @@ document.addEventListener("DOMContentLoaded", () => {
           "profile-photo-placeholder"
         );
         if (data.user.photo) {
-          const photoUrl = `${data.user.photo}?t=${Date.now()}`; // Додаємо параметр часу для уникнення кешу
+          const photoUrl = `${data.user.photo}?t=${Date.now()}`;
           profilePhoto.src = photoUrl;
           profilePhoto.classList.remove("hidden");
           placeholder.classList.add("hidden");
@@ -93,10 +95,12 @@ document.addEventListener("DOMContentLoaded", () => {
         ) {
           loginFormContainer.classList.add("hidden");
           profileEditContainer.classList.remove("hidden");
+          chatContainer.classList.add("hidden");
           body.classList.add("profile-active");
         } else {
           loginFormContainer.classList.add("hidden");
           profileContainer.classList.remove("hidden");
+          chatContainer.classList.add("hidden");
           body.classList.add("profile-active");
         }
       } else {
@@ -105,6 +109,7 @@ document.addEventListener("DOMContentLoaded", () => {
         loginFormContainer.classList.remove("hidden");
         profileContainer.classList.add("hidden");
         profileEditContainer.classList.add("hidden");
+        chatContainer.classList.add("hidden");
         body.classList.remove("profile-active");
       }
     } catch (error) {
@@ -114,12 +119,14 @@ document.addEventListener("DOMContentLoaded", () => {
       loginFormContainer.classList.remove("hidden");
       profileContainer.classList.add("hidden");
       profileEditContainer.classList.add("hidden");
+      chatContainer.classList.add("hidden");
       body.classList.remove("profile-active");
     }
   };
 
   // Вызываем проверку авторизации при загрузке страницы
   checkAuth();
+
   const loginForm = document.getElementById("login");
   const registerForm = document.getElementById("register");
   const profileEditForm = document.getElementById("profile-edit");
@@ -129,11 +136,58 @@ document.addEventListener("DOMContentLoaded", () => {
     "profile-edit-container"
   );
   const profileContainer = document.getElementById("profile");
+  const chatContainer = document.getElementById("chat");
   const showRegister = document.getElementById("show-register");
   const showLogin = document.getElementById("show-login");
   const logoutButton = document.getElementById("logout");
   const editProfileBtn = document.getElementById("edit-profile-btn");
+  const chatBtn = document.getElementById("chat-btn");
+  const backToProfileFromChat = document.getElementById(
+    "back-to-profile-from-chat"
+  );
+  const sendMessageBtn = document.getElementById("send-message");
+  const chatInput = document.getElementById("chat-input");
+  const chatMessages = document.getElementById("chat-messages");
   const body = document.body;
+
+  // WebSocket для чата
+  let socket = null;
+  const connectWebSocket = () => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      alert("Будь ласка, увійдіть, щоб використовувати чат");
+      chatContainer.classList.add("hidden");
+      loginFormContainer.classList.remove("hidden");
+      body.classList.remove("profile-active");
+      return;
+    }
+
+    socket = new WebSocket(`ws://${window.location.host}/ws?token=${token}`);
+
+    socket.onopen = () => {
+      console.log("WebSocket з'єднання відкрито");
+    };
+
+    socket.onmessage = (event) => {
+      const message = JSON.parse(event.data);
+      const messageElement = document.createElement("div");
+      messageElement.className = "p-2 border-b";
+      messageElement.textContent = `${message.user}: ${
+        message.text
+      } (${new Date(message.timestamp).toLocaleTimeString()})`;
+      chatMessages.appendChild(messageElement);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    };
+
+    socket.onclose = () => {
+      console.log("WebSocket з'єднання закрито");
+      setTimeout(connectWebSocket, 5000); // Повторное подключение через 5 секунд
+    };
+
+    socket.onerror = (error) => {
+      console.error("WebSocket помилка:", error);
+    };
+  };
 
   // Переключение между формами входа и регистрации
   showRegister.addEventListener("click", () => {
@@ -228,7 +282,7 @@ document.addEventListener("DOMContentLoaded", () => {
           "profile-photo-placeholder"
         );
         if (data.user.photo) {
-          const photoUrl = `${data.user.photo}?t=${Date.now()}`; // Додаємо параметр часу
+          const photoUrl = `${data.user.photo}?t=${Date.now()}`;
           profilePhoto.src = photoUrl;
           profilePhoto.classList.remove("hidden");
           placeholder.classList.add("hidden");
@@ -273,10 +327,12 @@ document.addEventListener("DOMContentLoaded", () => {
         ) {
           loginFormContainer.classList.add("hidden");
           profileEditContainer.classList.remove("hidden");
+          chatContainer.classList.add("hidden");
           body.classList.add("profile-active");
         } else {
           loginFormContainer.classList.add("hidden");
           profileContainer.classList.remove("hidden");
+          chatContainer.classList.add("hidden");
           body.classList.add("profile-active");
         }
       } else {
@@ -318,7 +374,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const uploadData = await uploadResponse.json();
         if (uploadResponse.ok) {
           photo = uploadData.photoUrl;
-          photoInput.value = ""; // Сбрасываем поле файла
+          photoInput.value = "";
         } else {
           alert(uploadData.error || "Помилка завантаження фото");
           return;
@@ -399,6 +455,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         profileEditContainer.classList.add("hidden");
         profileContainer.classList.remove("hidden");
+        chatContainer.classList.add("hidden");
         body.classList.add("profile-active");
       } else {
         alert(data.error || "Помилка оновлення профілю");
@@ -413,7 +470,47 @@ document.addEventListener("DOMContentLoaded", () => {
   editProfileBtn.addEventListener("click", () => {
     profileContainer.classList.add("hidden");
     profileEditContainer.classList.remove("hidden");
+    chatContainer.classList.add("hidden");
     body.classList.add("profile-active");
+  });
+
+  // Показ чата
+  chatBtn.addEventListener("click", () => {
+    profileContainer.classList.add("hidden");
+    profileEditContainer.classList.add("hidden");
+    chatContainer.classList.remove("hidden");
+    body.classList.add("profile-active");
+    connectWebSocket();
+  });
+
+  // Возврат к профилю из чата
+  backToProfileFromChat.addEventListener("click", () => {
+    chatContainer.classList.add("hidden");
+    profileContainer.classList.remove("hidden");
+    profileEditContainer.classList.add("hidden");
+    body.classList.add("profile-active");
+    if (socket) {
+      socket.close();
+    }
+  });
+
+  // Отправка сообщения в чат
+  sendMessageBtn.addEventListener("click", () => {
+    const message = chatInput.value.trim();
+    if (!message) return;
+    if (!socket || socket.readyState !== WebSocket.OPEN) {
+      alert("З'єднання з чатом відсутнє. Спробуйте ще раз.");
+      return;
+    }
+    socket.send(JSON.stringify({ text: message }));
+    chatInput.value = "";
+  });
+
+  // Отправка сообщения по нажатию Enter
+  chatInput.addEventListener("keypress", (e) => {
+    if (e.key === "Enter") {
+      sendMessageBtn.click();
+    }
   });
 
   // Обработка выхода
@@ -421,8 +518,12 @@ document.addEventListener("DOMContentLoaded", () => {
     localStorage.removeItem("token");
     profileContainer.classList.add("hidden");
     profileEditContainer.classList.add("hidden");
+    chatContainer.classList.add("hidden");
     loginFormContainer.classList.remove("hidden");
     body.classList.remove("profile-active");
+    if (socket) {
+      socket.close();
+    }
   });
 
   // Обработка кнопки "Повернутися"
@@ -430,6 +531,7 @@ document.addEventListener("DOMContentLoaded", () => {
   backToProfileBtn.addEventListener("click", () => {
     profileEditContainer.classList.add("hidden");
     profileContainer.classList.remove("hidden");
+    chatContainer.classList.add("hidden");
     body.classList.add("profile-active");
   });
 });

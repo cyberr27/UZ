@@ -208,6 +208,12 @@
           <p class="my-wid">ID працівника :</p>
           <p id="profile-workerId" class="text-gray-600"></p>
           <button
+            id="chat-btn"
+            class="mt-4 bg-purple-500 text-white p-2 rounded hover:bg-purple-600 transition"
+          >
+            Спілкування
+          </button>
+          <button
             id="edit-profile-btn"
             class="mt-4 bg-blue-500 text-white p-2 rounded hover:bg-blue-600 transition"
           >
@@ -220,6 +226,38 @@
             Вийти
           </button>
         </div>
+      </div>
+
+      <!-- Chat Page -->
+      <div
+        id="chat"
+        class="hidden bg-white p-8 rounded-lg shadow-lg w-[80%] mx-[10%] animate__animated animate__fadeIn"
+      >
+        <h2 class="text-2xl font-bold mb-6 text-center">Чат</h2>
+        <div
+          id="chat-messages"
+          class="h-96 overflow-y-auto border p-4 mb-4 rounded bg-gray-50"
+        ></div>
+        <div class="flex">
+          <input
+            type="text"
+            id="chat-input"
+            class="flex-1 p-2 border rounded-l focus:outline-none focus:ring-2 focus:ring-purple-500"
+            placeholder="Введіть повідомлення..."
+          />
+          <button
+            id="send-message"
+            class="bg-purple-500 text-white p-2 rounded-r hover:bg-purple-600 transition"
+          >
+            Надіслати
+          </button>
+        </div>
+        <button
+          id="back-to-profile-from-chat"
+          class="w-full bg-gray-500 text-white p-2 rounded hover:bg-gray-600 transition mt-4"
+        >
+          Повернутися до профілю
+        </button>
       </div>
     </div>
     <script src="/js/script.js"></script>
