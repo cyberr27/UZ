@@ -162,7 +162,11 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    socket = new WebSocket(`ws://${window.location.host}/ws?token=${token}`);
+    // Используем wss:// для безопасного соединения
+    const wsProtocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+    socket = new WebSocket(
+      `${wsProtocol}//${window.location.host}/ws?token=${token}`
+    );
 
     socket.onopen = () => {
       console.log("WebSocket з'єднання відкрито");
