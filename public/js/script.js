@@ -7,14 +7,12 @@ document.addEventListener("DOMContentLoaded", () => {
     const profileEditContainer = document.getElementById(
       "profile-edit-container"
     );
-    const chatContainer = document.getElementById("chat");
     const body = document.body;
 
     if (!token) {
       loginFormContainer.classList.remove("hidden");
       profileContainer.classList.add("hidden");
       profileEditContainer.classList.add("hidden");
-      chatContainer.classList.add("hidden");
       body.classList.remove("profile-active");
       return;
     }
@@ -49,7 +47,7 @@ document.addEventListener("DOMContentLoaded", () => {
           "profile-photo-placeholder"
         );
         if (data.user.photo) {
-          const photoUrl = `${data.user.photo}?t=${Date.now()}`;
+          const photoUrl = `${data.user.photo}?t=${Date.now()}`; // Додаємо параметр часу для уникнення кешу
           profilePhoto.src = photoUrl;
           profilePhoto.classList.remove("hidden");
           placeholder.classList.add("hidden");
@@ -95,12 +93,10 @@ document.addEventListener("DOMContentLoaded", () => {
         ) {
           loginFormContainer.classList.add("hidden");
           profileEditContainer.classList.remove("hidden");
-          chatContainer.classList.add("hidden");
           body.classList.add("profile-active");
         } else {
           loginFormContainer.classList.add("hidden");
           profileContainer.classList.remove("hidden");
-          chatContainer.classList.add("hidden");
           body.classList.add("profile-active");
         }
       } else {
@@ -109,7 +105,6 @@ document.addEventListener("DOMContentLoaded", () => {
         loginFormContainer.classList.remove("hidden");
         profileContainer.classList.add("hidden");
         profileEditContainer.classList.add("hidden");
-        chatContainer.classList.add("hidden");
         body.classList.remove("profile-active");
       }
     } catch (error) {
@@ -119,14 +114,12 @@ document.addEventListener("DOMContentLoaded", () => {
       loginFormContainer.classList.remove("hidden");
       profileContainer.classList.add("hidden");
       profileEditContainer.classList.add("hidden");
-      chatContainer.classList.add("hidden");
       body.classList.remove("profile-active");
     }
   };
 
   // Вызываем проверку авторизации при загрузке страницы
   checkAuth();
-
   const loginForm = document.getElementById("login");
   const registerForm = document.getElementById("register");
   const profileEditForm = document.getElementById("profile-edit");
@@ -136,108 +129,11 @@ document.addEventListener("DOMContentLoaded", () => {
     "profile-edit-container"
   );
   const profileContainer = document.getElementById("profile");
-  const chatContainer = document.getElementById("chat");
   const showRegister = document.getElementById("show-register");
   const showLogin = document.getElementById("show-login");
   const logoutButton = document.getElementById("logout");
   const editProfileBtn = document.getElementById("edit-profile-btn");
-  const chatBtn = document.getElementById("chat-btn");
-  const backToProfileFromChat = document.getElementById(
-    "back-to-profile-from-chat"
-  );
-  const sendMessageBtn = document.getElementById("send-message");
-  const chatInput = document.getElementById("chat-input");
-  const chatMessages = document.getElementById("chat-messages");
   const body = document.body;
-
-  // WebSocket для чата
-  let socket = null;
-  let retryCount = 0;
-  const maxRetries = 5;
-  const retryDelay = 5000; // 5 секунд
-
-  const connectWebSocket = () => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      alert("Будь ласка, увійдіть, щоб використовувати чат");
-      chatContainer.classList.add("hidden");
-      loginFormContainer.classList.remove("hidden");
-      body.classList.remove("profile-active");
-      return;
-    }
-
-    // Используем wss:// для безопасного соединения, учитываем хостинг (например, Render)
-    const wsProtocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-    const wsHost = window.location.host.includes("onrender.com")
-      ? window.location.host
-      : window.location.host;
-    socket = new WebSocket(`${wsProtocol}//${wsHost}/ws?token=${token}`);
-
-    socket.onopen = () => {
-      console.log("WebSocket з'єднання відкрито");
-      retryCount = 0; // Сбрасываем счетчик при успешном подключении
-      chatMessages.innerHTML +=
-        '<div class="p-2 text-green-600">З\'єднання з чатом встановлено</div>';
-      chatMessages.scrollTop = chatMessages.scrollHeight;
-    };
-
-    socket.onmessage = (event) => {
-      try {
-        const message = JSON.parse(event.data);
-        const messageElement = document.createElement("div");
-        messageElement.className = "p-2 border-b";
-        // Форматируем сообщение с учетом отправителя
-        const isCurrentUser = message.userId === getUserIdFromToken(token);
-        const messageStyle = isCurrentUser
-          ? "text-blue-600 font-bold"
-          : "text-gray-800";
-        messageElement.innerHTML = `<span class="${messageStyle}">${
-          message.user
-        }:</span> ${
-          message.text
-        } <span class="text-gray-500 text-sm">(${new Date(
-          message.timestamp
-        ).toLocaleTimeString()})</span>`;
-        chatMessages.appendChild(messageElement);
-        chatMessages.scrollTop = chatMessages.scrollHeight;
-      } catch (error) {
-        console.error("Помилка парсингу повідомлення:", error);
-      }
-    };
-
-    socket.onclose = (event) => {
-      console.log("WebSocket з'єднання закрито:", event.code, event.reason);
-      chatMessages.innerHTML +=
-        '<div class="p-2 text-red-600">З\'єднання з чатом розірвано. Спроба перепідключення...</div>';
-      chatMessages.scrollTop = chatMessages.scrollHeight;
-      if (retryCount < maxRetries) {
-        retryCount++;
-        setTimeout(connectWebSocket, retryDelay);
-      } else {
-        chatMessages.innerHTML +=
-          '<div class="p-2 text-red-600">Не вдалося підключитися після кількох спроб. Перевірте з\'єднання.</div>';
-        chatMessages.scrollTop = chatMessages.scrollHeight;
-      }
-    };
-
-    socket.onerror = (error) => {
-      console.error("WebSocket помилка:", error);
-      chatMessages.innerHTML +=
-        '<div class="p-2 text-red-600">Помилка WebSocket. Перевірте консоль для деталей.</div>';
-      chatMessages.scrollTop = chatMessages.scrollHeight;
-    };
-  };
-
-  // Функция для извлечения userId из токена
-  const getUserIdFromToken = (token) => {
-    try {
-      const decoded = JSON.parse(atob(token.split(".")[1]));
-      return decoded.userId;
-    } catch (error) {
-      console.error("Помилка декодування токена:", error);
-      return null;
-    }
-  };
 
   // Переключение между формами входа и регистрации
   showRegister.addEventListener("click", () => {
@@ -332,7 +228,7 @@ document.addEventListener("DOMContentLoaded", () => {
           "profile-photo-placeholder"
         );
         if (data.user.photo) {
-          const photoUrl = `${data.user.photo}?t=${Date.now()}`;
+          const photoUrl = `${data.user.photo}?t=${Date.now()}`; // Додаємо параметр часу
           profilePhoto.src = photoUrl;
           profilePhoto.classList.remove("hidden");
           placeholder.classList.add("hidden");
@@ -377,12 +273,10 @@ document.addEventListener("DOMContentLoaded", () => {
         ) {
           loginFormContainer.classList.add("hidden");
           profileEditContainer.classList.remove("hidden");
-          chatContainer.classList.add("hidden");
           body.classList.add("profile-active");
         } else {
           loginFormContainer.classList.add("hidden");
           profileContainer.classList.remove("hidden");
-          chatContainer.classList.add("hidden");
           body.classList.add("profile-active");
         }
       } else {
@@ -424,7 +318,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const uploadData = await uploadResponse.json();
         if (uploadResponse.ok) {
           photo = uploadData.photoUrl;
-          photoInput.value = "";
+          photoInput.value = ""; // Сбрасываем поле файла
         } else {
           alert(uploadData.error || "Помилка завантаження фото");
           return;
@@ -505,7 +399,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
         profileEditContainer.classList.add("hidden");
         profileContainer.classList.remove("hidden");
-        chatContainer.classList.add("hidden");
         body.classList.add("profile-active");
       } else {
         alert(data.error || "Помилка оновлення профілю");
@@ -520,48 +413,7 @@ document.addEventListener("DOMContentLoaded", () => {
   editProfileBtn.addEventListener("click", () => {
     profileContainer.classList.add("hidden");
     profileEditContainer.classList.remove("hidden");
-    chatContainer.classList.add("hidden");
     body.classList.add("profile-active");
-  });
-
-  // Показ чата
-  chatBtn.addEventListener("click", () => {
-    profileContainer.classList.add("hidden");
-    profileEditContainer.classList.add("hidden");
-    chatContainer.classList.remove("hidden");
-    body.classList.add("profile-active");
-    connectWebSocket();
-  });
-
-  // Возврат к профилю из чата
-  backToProfileFromChat.addEventListener("click", () => {
-    chatContainer.classList.add("hidden");
-    profileContainer.classList.remove("hidden");
-    profileEditContainer.classList.add("hidden");
-    body.classList.add("profile-active");
-    if (socket) {
-      socket.close();
-    }
-  });
-
-  // Отправка сообщения в чат
-  sendMessageBtn.addEventListener("click", () => {
-    const message = chatInput.value.trim();
-    if (!message) return;
-    if (!socket || socket.readyState !== WebSocket.OPEN) {
-      alert("З'єднання з чатом відсутнє. Спробуйте ще раз.");
-      connectWebSocket();
-      return;
-    }
-    socket.send(JSON.stringify({ text: message }));
-    chatInput.value = "";
-  });
-
-  // Отправка сообщения по нажатию Enter
-  chatInput.addEventListener("keypress", (e) => {
-    if (e.key === "Enter") {
-      sendMessageBtn.click();
-    }
   });
 
   // Обработка выхода
@@ -569,12 +421,8 @@ document.addEventListener("DOMContentLoaded", () => {
     localStorage.removeItem("token");
     profileContainer.classList.add("hidden");
     profileEditContainer.classList.add("hidden");
-    chatContainer.classList.add("hidden");
     loginFormContainer.classList.remove("hidden");
     body.classList.remove("profile-active");
-    if (socket) {
-      socket.close();
-    }
   });
 
   // Обработка кнопки "Повернутися"
@@ -582,7 +430,6 @@ document.addEventListener("DOMContentLoaded", () => {
   backToProfileBtn.addEventListener("click", () => {
     profileEditContainer.classList.add("hidden");
     profileContainer.classList.remove("hidden");
-    chatContainer.classList.add("hidden");
     body.classList.add("profile-active");
   });
 });
