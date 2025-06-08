@@ -7,25 +7,27 @@ const path = require("path");
 const jwt = require("jsonwebtoken");
 const cloudinary = require("cloudinary").v2;
 const fileUpload = require("express-fileupload");
+const { WebSocketServer } = require("ws"); // Правильный импорт WebSocketServer
+const http = require("http"); // Добавляем http для создания сервера
 
 const User = require("./models/User");
 
 dotenv.config();
 const app = express();
+const server = http.createServer(app); // Создаем HTTP-сервер
 
 // Логування змінних середовища для діагностики
 console.log("CLOUDINARY_URL:", process.env.CLOUDINARY_URL ? "Set" : "Not set");
+console.log("MONGO_URI:", process.env.MONGO_URI ? "Set" : "Not set");
+console.log("JWT_SECRET:", process.env.JWT_SECRET ? "Set" : "Not set");
 
-// Конфігурація Cloudinary виключно через CLOUDINARY_URL
+// Конфігурація Cloudinary
 try {
   if (!process.env.CLOUDINARY_URL) {
     throw new Error("CLOUDINARY_URL is not set in environment variables");
   }
   console.log("Configuring Cloudinary with CLOUDINARY_URL");
-  cloudinary.config({
-    cloudinary_url: process.env.CLOUDINARY_URL,
-  });
-  // Перевіряємо конфігурацію
+  cloudinary.config(); // Cloudinary сам распарсит CLOUDINARY_URL
   console.log("Cloudinary configuration:", {
     cloud_name: cloudinary.config().cloud_name,
     api_key: cloudinary.config().api_key,
@@ -33,8 +35,6 @@ try {
   });
 } catch (error) {
   console.error("Cloudinary configuration error:", error.message);
-  // Вирішуй, чи зупиняти сервер, чи продовжувати без Cloudinary
-  // Наприклад, можна не зупиняти, але попередити, що завантаження фото не працюватиме
 }
 
 // Middleware
@@ -43,15 +43,15 @@ app.use(cors());
 app.use(express.json());
 
 // Обслуговування статичних файлів
-app.use(express.static(path.join(__dirname, "../public")));
+app.use(express.static(path.join(__dirname, "public"))); // Убедись, что папка public в корне проекта
 
 // Маршрут для головної сторінки
 app.get("/", (req, res) => {
-  const indexPath = path.join(__dirname, "../public", "index.html");
+  const indexPath = path.join(__dirname, "public", "index.html");
   res.sendFile(indexPath, (err) => {
     if (err) {
       console.error("Помилка відправки index.html:", err);
-      res.status(500).json({ error: "Не вдалося завантажити сторінку sixth" });
+      res.status(500).json({ error: "Не вдалося завантажити сторінку" });
     }
   });
 });
@@ -132,10 +132,6 @@ mongoose
   .then(() => console.log("Connected to MongoDB"))
   .catch((err) => console.error("MongoDB connection error:", err));
 
-// Запуск сервера
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
-
 // WebSocket сервер
 const wss = new WebSocketServer({ server });
 
@@ -202,4 +198,10 @@ wss.on("connection", (ws, req) => {
       console.error("WebSocket user check error:", error.message);
       ws.close(1008, "Server error");
     });
+});
+
+// Запуск сервера
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });
