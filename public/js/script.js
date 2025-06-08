@@ -152,6 +152,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // WebSocket для чата
   let socket = null;
+  let retryCount = 0;
+  const maxRetries = 5;
+  const retryDelay = 5000; // 5 секунд
+
   const connectWebSocket = () => {
     const token = localStorage.getItem("token");
     if (!token) {
@@ -162,35 +166,77 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    // Используем wss:// для безопасного соединения
+    // Используем wss:// для безопасного соединения, учитываем хостинг (например, Render)
     const wsProtocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-    socket = new WebSocket(
-      `${wsProtocol}//${window.location.host}/ws?token=${token}`
-    );
+    const wsHost = window.location.host.includes("onrender.com")
+      ? window.location.host
+      : window.location.host;
+    socket = new WebSocket(`${wsProtocol}//${wsHost}/ws?token=${token}`);
 
     socket.onopen = () => {
       console.log("WebSocket з'єднання відкрито");
-    };
-
-    socket.onmessage = (event) => {
-      const message = JSON.parse(event.data);
-      const messageElement = document.createElement("div");
-      messageElement.className = "p-2 border-b";
-      messageElement.textContent = `${message.user}: ${
-        message.text
-      } (${new Date(message.timestamp).toLocaleTimeString()})`;
-      chatMessages.appendChild(messageElement);
+      retryCount = 0; // Сбрасываем счетчик при успешном подключении
+      chatMessages.innerHTML +=
+        '<div class="p-2 text-green-600">З\'єднання з чатом встановлено</div>';
       chatMessages.scrollTop = chatMessages.scrollHeight;
     };
 
-    socket.onclose = () => {
-      console.log("WebSocket з'єднання закрито");
-      setTimeout(connectWebSocket, 5000); // Повторное подключение через 5 секунд
+    socket.onmessage = (event) => {
+      try {
+        const message = JSON.parse(event.data);
+        const messageElement = document.createElement("div");
+        messageElement.className = "p-2 border-b";
+        // Форматируем сообщение с учетом отправителя
+        const isCurrentUser = message.userId === getUserIdFromToken(token);
+        const messageStyle = isCurrentUser
+          ? "text-blue-600 font-bold"
+          : "text-gray-800";
+        messageElement.innerHTML = `<span class="${messageStyle}">${
+          message.user
+        }:</span> ${
+          message.text
+        } <span class="text-gray-500 text-sm">(${new Date(
+          message.timestamp
+        ).toLocaleTimeString()})</span>`;
+        chatMessages.appendChild(messageElement);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+      } catch (error) {
+        console.error("Помилка парсингу повідомлення:", error);
+      }
+    };
+
+    socket.onclose = (event) => {
+      console.log("WebSocket з'єднання закрито:", event.code, event.reason);
+      chatMessages.innerHTML +=
+        '<div class="p-2 text-red-600">З\'єднання з чатом розірвано. Спроба перепідключення...</div>';
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+      if (retryCount < maxRetries) {
+        retryCount++;
+        setTimeout(connectWebSocket, retryDelay);
+      } else {
+        chatMessages.innerHTML +=
+          '<div class="p-2 text-red-600">Не вдалося підключитися після кількох спроб. Перевірте з\'єднання.</div>';
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+      }
     };
 
     socket.onerror = (error) => {
       console.error("WebSocket помилка:", error);
+      chatMessages.innerHTML +=
+        '<div class="p-2 text-red-600">Помилка WebSocket. Перевірте консоль для деталей.</div>';
+      chatMessages.scrollTop = chatMessages.scrollHeight;
     };
+  };
+
+  // Функция для извлечения userId из токена
+  const getUserIdFromToken = (token) => {
+    try {
+      const decoded = JSON.parse(atob(token.split(".")[1]));
+      return decoded.userId;
+    } catch (error) {
+      console.error("Помилка декодування токена:", error);
+      return null;
+    }
   };
 
   // Переключение между формами входа и регистрации
@@ -504,6 +550,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!message) return;
     if (!socket || socket.readyState !== WebSocket.OPEN) {
       alert("З'єднання з чатом відсутнє. Спробуйте ще раз.");
+      connectWebSocket();
       return;
     }
     socket.send(JSON.stringify({ text: message }));
