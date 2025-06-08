@@ -1,4 +1,7 @@
 document.addEventListener("DOMContentLoaded", () => {
+  let ws = null;
+  let currentUser = null;
+
   // Функция для проверки авторизации и получения данных пользователя
   const checkAuth = async () => {
     const token = localStorage.getItem("token");
@@ -7,12 +10,14 @@ document.addEventListener("DOMContentLoaded", () => {
     const profileEditContainer = document.getElementById(
       "profile-edit-container"
     );
+    const chatContainer = document.getElementById("chat-container");
     const body = document.body;
 
     if (!token) {
       loginFormContainer.classList.remove("hidden");
       profileContainer.classList.add("hidden");
       profileEditContainer.classList.add("hidden");
+      chatContainer.classList.add("hidden");
       body.classList.remove("profile-active");
       return;
     }
@@ -27,6 +32,7 @@ document.addEventListener("DOMContentLoaded", () => {
       });
       const data = await response.json();
       if (response.ok) {
+        currentUser = data.user;
         // Обновляем данные профиля
         document.getElementById("profile-firstName").textContent =
           data.user.firstName || "Не вказано";
@@ -47,7 +53,7 @@ document.addEventListener("DOMContentLoaded", () => {
           "profile-photo-placeholder"
         );
         if (data.user.photo) {
-          const photoUrl = `${data.user.photo}?t=${Date.now()}`; // Додаємо параметр часу для уникнення кешу
+          const photoUrl = `${data.user.photo}?t=${Date.now()}`;
           profilePhoto.src = photoUrl;
           profilePhoto.classList.remove("hidden");
           placeholder.classList.add("hidden");
@@ -93,10 +99,12 @@ document.addEventListener("DOMContentLoaded", () => {
         ) {
           loginFormContainer.classList.add("hidden");
           profileEditContainer.classList.remove("hidden");
+          chatContainer.classList.add("hidden");
           body.classList.add("profile-active");
         } else {
           loginFormContainer.classList.add("hidden");
           profileContainer.classList.remove("hidden");
+          chatContainer.classList.add("hidden");
           body.classList.add("profile-active");
         }
       } else {
@@ -105,6 +113,7 @@ document.addEventListener("DOMContentLoaded", () => {
         loginFormContainer.classList.remove("hidden");
         profileContainer.classList.add("hidden");
         profileEditContainer.classList.add("hidden");
+        chatContainer.classList.add("hidden");
         body.classList.remove("profile-active");
       }
     } catch (error) {
@@ -114,8 +123,51 @@ document.addEventListener("DOMContentLoaded", () => {
       loginFormContainer.classList.remove("hidden");
       profileContainer.classList.add("hidden");
       profileEditContainer.classList.add("hidden");
+      chatContainer.classList.add("hidden");
       body.classList.remove("profile-active");
     }
+  };
+
+  // Инициализация WebSocket
+  const initWebSocket = () => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    // Подключаемся к WebSocket с токеном для аутентификации
+    ws = new WebSocket(`ws://${window.location.host}/ws?token=${token}`);
+
+    ws.onopen = () => {
+      console.log("WebSocket подключен");
+    };
+
+    ws.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      if (data.type === "message") {
+        displayMessage(data);
+      }
+    };
+
+    ws.onclose = () => {
+      console.log("WebSocket отключен");
+    };
+
+    ws.onerror = (error) => {
+      console.error("WebSocket ошибка:", error);
+    };
+  };
+
+  // Отображение сообщения в чате
+  const displayMessage = (data) => {
+    const chatMessages = document.getElementById("chat-messages");
+    const messageDiv = document.createElement("div");
+    messageDiv.classList.add("chat-message");
+    const isSent = data.senderId === currentUser.workerId;
+    messageDiv.classList.add(isSent ? "sent" : "received");
+    messageDiv.innerHTML = `<strong>${data.senderName || "Анонім"}:</strong> ${
+      data.message
+    }`;
+    chatMessages.appendChild(messageDiv);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
   };
 
   // Вызываем проверку авторизации при загрузке страницы
@@ -129,22 +181,28 @@ document.addEventListener("DOMContentLoaded", () => {
     "profile-edit-container"
   );
   const profileContainer = document.getElementById("profile");
+  const chatContainer = document.getElementById("chat-container");
   const showRegister = document.getElementById("show-register");
   const showLogin = document.getElementById("show-login");
   const logoutButton = document.getElementById("logout");
   const editProfileBtn = document.getElementById("edit-profile-btn");
+  const chatBtn = document.getElementById("chat-btn");
+  const sendChatBtn = document.getElementById("send-chat");
+  const chatInput = document.getElementById("chat-input");
   const body = document.body;
 
   // Переключение между формами входа и регистрации
   showRegister.addEventListener("click", () => {
     loginFormContainer.classList.add("hidden");
     registerFormContainer.classList.remove("hidden");
+    chatContainer.classList.add("hidden");
     body.classList.remove("profile-active");
   });
 
   showLogin.addEventListener("click", () => {
     registerFormContainer.classList.add("hidden");
     loginFormContainer.classList.remove("hidden");
+    chatContainer.classList.add("hidden");
     body.classList.remove("profile-active");
   });
 
@@ -180,6 +238,7 @@ document.addEventListener("DOMContentLoaded", () => {
         alert("Реєстрація успішна! Будь ласка, увійдіть.");
         registerFormContainer.classList.add("hidden");
         loginFormContainer.classList.remove("hidden");
+        chatContainer.classList.add("hidden");
         body.classList.remove("profile-active");
       } else {
         alert(data.error || "Помилка реєстрації");
@@ -209,6 +268,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const data = await response.json();
       if (response.ok) {
         localStorage.setItem("token", data.token);
+        currentUser = data.user;
         document.getElementById("profile-firstName").textContent =
           data.user.firstName || "Не вказано";
         document.getElementById("profile-lastName").textContent =
@@ -228,7 +288,7 @@ document.addEventListener("DOMContentLoaded", () => {
           "profile-photo-placeholder"
         );
         if (data.user.photo) {
-          const photoUrl = `${data.user.photo}?t=${Date.now()}`; // Додаємо параметр часу
+          const photoUrl = `${data.user.photo}?t=${Date.now()}`;
           profilePhoto.src = photoUrl;
           profilePhoto.classList.remove("hidden");
           placeholder.classList.add("hidden");
@@ -273,12 +333,15 @@ document.addEventListener("DOMContentLoaded", () => {
         ) {
           loginFormContainer.classList.add("hidden");
           profileEditContainer.classList.remove("hidden");
+          chatContainer.classList.add("hidden");
           body.classList.add("profile-active");
         } else {
           loginFormContainer.classList.add("hidden");
           profileContainer.classList.remove("hidden");
+          chatContainer.classList.add("hidden");
           body.classList.add("profile-active");
         }
+        initWebSocket();
       } else {
         alert(data.error || "Помилка входу");
       }
@@ -318,7 +381,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const uploadData = await uploadResponse.json();
         if (uploadResponse.ok) {
           photo = uploadData.photoUrl;
-          photoInput.value = ""; // Сбрасываем поле файла
+          photoInput.value = "";
         } else {
           alert(uploadData.error || "Помилка завантаження фото");
           return;
@@ -354,6 +417,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const data = await response.json();
       if (response.ok) {
         alert("Профіль оновлено!");
+        currentUser = data.user;
         document.getElementById("profile-firstName").textContent =
           data.user.firstName || "Не вказано";
         document.getElementById("profile-lastName").textContent =
@@ -399,6 +463,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         profileEditContainer.classList.add("hidden");
         profileContainer.classList.remove("hidden");
+        chatContainer.classList.add("hidden");
         body.classList.add("profile-active");
       } else {
         alert(data.error || "Помилка оновлення профілю");
@@ -413,14 +478,55 @@ document.addEventListener("DOMContentLoaded", () => {
   editProfileBtn.addEventListener("click", () => {
     profileContainer.classList.add("hidden");
     profileEditContainer.classList.remove("hidden");
+    chatContainer.classList.add("hidden");
     body.classList.add("profile-active");
+  });
+
+  // Показ чата
+  chatBtn.addEventListener("click", () => {
+    profileContainer.classList.remove("hidden");
+    chatContainer.classList.remove("hidden");
+    profileEditContainer.classList.add("hidden");
+    body.classList.add("profile-active");
+    if (!ws || ws.readyState !== WebSocket.OPEN) {
+      initWebSocket();
+    }
+  });
+
+  // Отправка сообщения
+  sendChatBtn.addEventListener("click", () => {
+    const message = chatInput.value.trim();
+    if (message && ws && ws.readyState === WebSocket.OPEN) {
+      const data = {
+        type: "message",
+        message: message,
+        senderId: currentUser.workerId,
+        senderName:
+          `${currentUser.firstName || ""} ${
+            currentUser.lastName || ""
+          }`.trim() || "Анонім",
+      };
+      ws.send(JSON.stringify(data));
+      chatInput.value = "";
+    }
+  });
+
+  // Отправка сообщения по Enter
+  chatInput.addEventListener("keypress", (e) => {
+    if (e.key === "Enter") {
+      sendChatBtn.click();
+    }
   });
 
   // Обработка выхода
   logoutButton.addEventListener("click", () => {
+    if (ws) {
+      ws.close();
+    }
     localStorage.removeItem("token");
     profileContainer.classList.add("hidden");
     profileEditContainer.classList.add("hidden");
+    chatContainer.classList.add("hidden");
     loginFormContainer.classList.remove("hidden");
     body.classList.remove("profile-active");
   });
@@ -430,6 +536,7 @@ document.addEventListener("DOMContentLoaded", () => {
   backToProfileBtn.addEventListener("click", () => {
     profileEditContainer.classList.add("hidden");
     profileContainer.classList.remove("hidden");
+    chatContainer.classList.add("hidden");
     body.classList.add("profile-active");
   });
 });

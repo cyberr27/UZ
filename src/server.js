@@ -135,3 +135,71 @@ mongoose
 // Запуск сервера
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+// WebSocket сервер
+const wss = new WebSocketServer({ server });
+
+const clients = new Map(); // Храним подключенных клиентов: workerId -> ws
+
+wss.on("connection", (ws, req) => {
+  // Аутентификация через токен
+  const urlParams = new URLSearchParams(req.url.split("?")[1]);
+  const token = urlParams.get("token");
+  let userId = null;
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    userId = decoded.userId;
+  } catch (error) {
+    console.error("WebSocket auth error:", error.message);
+    ws.close(1008, "Invalid token");
+    return;
+  }
+
+  // Проверяем пользователя в базе
+  User.findById(userId)
+    .then((user) => {
+      if (!user) {
+        ws.close(1008, "User not found");
+        return;
+      }
+
+      // Сохраняем подключение
+      clients.set(user.workerId, ws);
+      console.log(`User ${user.workerId} connected`);
+
+      // Обработка сообщений
+      ws.on("message", (data) => {
+        try {
+          const messageData = JSON.parse(data);
+          if (messageData.type === "message") {
+            const broadcastData = {
+              type: "message",
+              senderId: user.workerId,
+              senderName: messageData.senderName,
+              message: messageData.message,
+              timestamp: new Date().toISOString(),
+            };
+            // Рассылаем сообщение всем подключенным клиентам
+            clients.forEach((client, clientId) => {
+              if (client.readyState === client.OPEN) {
+                client.send(JSON.stringify(broadcastData));
+              }
+            });
+          }
+        } catch (error) {
+          console.error("WebSocket message error:", error.message);
+        }
+      });
+
+      // Обработка отключения
+      ws.on("close", () => {
+        clients.delete(user.workerId);
+        console.log(`User ${user.workerId} disconnected`);
+      });
+    })
+    .catch((error) => {
+      console.error("WebSocket user check error:", error.message);
+      ws.close(1008, "Server error");
+    });
+});
