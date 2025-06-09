@@ -58,11 +58,6 @@ body.profile-active #auth-container {
   backdrop-filter: none;
 }
 
-#my-pContainer {
-  width: 90%;
-  height: 90%;
-}
-
 #chat-container {
   width: 100%;
   height: 100%;
