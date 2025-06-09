@@ -47,8 +47,18 @@ body.profile-active #auth-container {
   width: 100%;
   max-width: 500px;
 }
-#my-pc,
+
 #profile {
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.95);
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  backdrop-filter: none;
+}
+
+#my-pc {
   width: 100%;
   height: 100%;
   background: rgba(255, 255, 255, 0.95);
