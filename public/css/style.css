@@ -60,7 +60,7 @@ body.profile-active #auth-container {
 
 #chat-container {
   width: 100%;
-  max-width: 500px;
+  height: 100%;
   background: rgba(255, 255, 255, 0.95);
   padding: 2rem;
   border-radius: 12px;
@@ -99,6 +99,11 @@ button:hover {
   transform: translateY(-2px);
 }
 
+#send-chat {
+  position: absolute;
+  left: 87.8%;
+}
+
 #logout {
   position: absolute;
   right: 4%;
@@ -111,7 +116,7 @@ button:hover {
 
 #edit-profile-btn {
   position: absolute;
-  right: 12%;
+  right: 7.5%;
   top: 11%;
   width: 8%;
   height: 5%;
@@ -119,13 +124,17 @@ button:hover {
   padding: 0;
 }
 
+#chat-input {
+  width: 90%;
+}
+
 #chat-btn {
   position: absolute;
-  right: 20.5%;
-  top: 11%;
-  width: 8%;
-  height: 5%;
-  font-size: 10px;
+  left: 8.8%;
+  top: 50%;
+  width: 10%;
+  height: 8%;
+  font-size: 17px;
   padding: 0;
 }
 
@@ -147,6 +156,11 @@ button:hover {
   position: relative;
   height: 100%;
   width: 100%;
+}
+#profile-photo {
+  width: 100%;
+  height: 100%;
+  border-radius: 5%;
 }
 
 .userInfo {
@@ -268,8 +282,7 @@ input:focus {
     padding: 1.5rem;
   }
 
-  #chat-btn,
-  #edit-profile-btn,
+  #chat-btn #edit-profile-btn,
   #logout {
     width: 15%;
     font-size: 12px;
