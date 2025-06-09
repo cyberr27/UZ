@@ -59,7 +59,7 @@ document.addEventListener("DOMContentLoaded", () => {
           placeholder.classList.add("hidden");
           profilePhoto.onerror = () => {
             console.error(
-              `Помилка завантаження зображення: ${photoUrl}. Перевірте, чи файл існує в /public/uploads/`
+              `Помилка завантаження зображення: ${photoUrl}. Перевірте URL Cloudinary`
             );
             const initials = `${data.user.firstName?.charAt(0) || ""}${
               data.user.lastName?.charAt(0) || ""
@@ -158,33 +158,8 @@ document.addEventListener("DOMContentLoaded", () => {
     };
   };
 
-  // Функция для получения данных пользователя по workerId
-  const fetchUserProfile = async (workerId) => {
-    try {
-      const token = localStorage.getItem("token");
-      const response = await fetch(`/api/auth/user/${workerId}`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      const data = await response.json();
-      if (response.ok) {
-        return data.user;
-      } else {
-        alert(data.error || "Помилка завантаження профілю");
-        return null;
-      }
-    } catch (error) {
-      console.error("Помилка завантаження профілю:", error);
-      alert("Помилка завантаження профілю: " + error.message);
-      return null;
-    }
-  };
-
   // Функция для открытия профиля пользователя в новой вкладке
-  const openUserProfileInNewTab = async (workerId) => {
+  const openUserProfileInNewTab = (workerId) => {
     try {
       const token = localStorage.getItem("token");
       if (!token) {
@@ -192,8 +167,8 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
       }
       // Формируем URL для страницы профиля пользователя
-      const profileUrl = `/profile?workerId=${workerId}&token=${token}`;
-      // Открываем новую вкладку
+      const profileUrl = `/profile.html?workerId=${workerId}&token=${token}`;
+      // Открываем новую вкладку с проверкой на блокировку всплывающих окон
       const newWindow = window.open(profileUrl, "_blank");
       if (!newWindow) {
         alert(
@@ -211,21 +186,48 @@ document.addEventListener("DOMContentLoaded", () => {
     const chatMessages = document.getElementById("chat-messages");
     const messageDiv = document.createElement("div");
     messageDiv.classList.add("chat-message");
-    const isSent = data.senderId === currentUser.workerId;
+    const isSent = data.senderId === currentUser?.workerId;
     messageDiv.classList.add(isSent ? "sent" : "received");
+
+    // Создаем кликабельный элемент для имени пользователя
     const senderNameSpan = document.createElement("span");
     senderNameSpan.classList.add("chat-username");
     senderNameSpan.textContent = data.senderName || "Анонім";
-    // Открываем профиль в новой вкладке при клике на имя
-    senderNameSpan.onclick = () => openUserProfileInNewTab(data.senderId);
+    senderNameSpan.style.cursor = "pointer";
+    senderNameSpan.title = "Натисніть, щоб переглянути профіль"; // Подсказка при наведении
+
+    // Добавляем обработчик клика для открытия профиля
+    senderNameSpan.addEventListener("click", () => {
+      openUserProfileInNewTab(data.senderId);
+    });
+
+    // Формируем содержимое сообщения
     messageDiv.appendChild(senderNameSpan);
-    messageDiv.innerHTML += `: ${data.message}`;
+    const messageText = document.createElement("span");
+    messageText.textContent = `: ${data.message}`;
+    messageDiv.appendChild(messageText);
+
+    // Добавляем временную метку для лучшей читаемости
+    const timestamp = document.createElement("div");
+    timestamp.style.fontSize = "0.75rem";
+    timestamp.style.color = "#6b7280";
+    timestamp.style.marginTop = "2px";
+    timestamp.textContent = new Date(data.timestamp).toLocaleString("uk-UA", {
+      hour: "2-digit",
+      minute: "2-digit",
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    });
+    messageDiv.appendChild(timestamp);
+
     chatMessages.appendChild(messageDiv);
     chatMessages.scrollTop = chatMessages.scrollHeight;
   };
 
   // Вызываем проверку авторизации при загрузке страницы
   checkAuth();
+
   const loginForm = document.getElementById("login");
   const registerForm = document.getElementById("register");
   const profileEditForm = document.getElementById("profile-edit");
@@ -575,6 +577,7 @@ document.addEventListener("DOMContentLoaded", () => {
           `${currentUser.firstName || ""} ${
             currentUser.lastName || ""
           }`.trim() || "Анонім",
+        timestamp: new Date().toISOString(),
       };
       ws.send(JSON.stringify(data));
       chatInput.value = "";
