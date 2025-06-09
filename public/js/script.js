@@ -158,6 +158,54 @@ document.addEventListener("DOMContentLoaded", () => {
     };
   };
 
+  // Функция для получения данных пользователя по workerId
+  const fetchUserProfile = async (workerId) => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch(`/api/auth/user/${workerId}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const data = await response.json();
+      if (response.ok) {
+        return data.user;
+      } else {
+        alert(data.error || "Помилка завантаження профілю");
+        return null;
+      }
+    } catch (error) {
+      console.error("Помилка завантаження профілю:", error);
+      alert("Помилка завантаження профілю: " + error.message);
+      return null;
+    }
+  };
+
+  // Функция для открытия профиля пользователя в новой вкладке
+  const openUserProfileInNewTab = async (workerId) => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        alert("Токен відсутній. Будь ласка, увійдіть знову.");
+        return;
+      }
+      // Формируем URL для страницы профиля пользователя
+      const profileUrl = `/profile?workerId=${workerId}&token=${token}`;
+      // Открываем новую вкладку
+      const newWindow = window.open(profileUrl, "_blank");
+      if (!newWindow) {
+        alert(
+          "Дозвольте спливаючі вікна у вашому браузері для перегляду профілю."
+        );
+      }
+    } catch (error) {
+      console.error("Помилка при відкритті профілю:", error);
+      alert("Помилка при відкритті профілю: " + error.message);
+    }
+  };
+
   // Отображение сообщения в чате
   const displayMessage = (data) => {
     const chatMessages = document.getElementById("chat-messages");
@@ -165,9 +213,13 @@ document.addEventListener("DOMContentLoaded", () => {
     messageDiv.classList.add("chat-message");
     const isSent = data.senderId === currentUser.workerId;
     messageDiv.classList.add(isSent ? "sent" : "received");
-    messageDiv.innerHTML = `<strong>${data.senderName || "Анонім"}:</strong> ${
-      data.message
-    }`;
+    const senderNameSpan = document.createElement("span");
+    senderNameSpan.classList.add("chat-username");
+    senderNameSpan.textContent = data.senderName || "Анонім";
+    // Открываем профиль в новой вкладке при клике на имя
+    senderNameSpan.onclick = () => openUserProfileInNewTab(data.senderId);
+    messageDiv.appendChild(senderNameSpan);
+    messageDiv.innerHTML += `: ${data.message}`;
     chatMessages.appendChild(messageDiv);
     chatMessages.scrollTop = chatMessages.scrollHeight;
   };

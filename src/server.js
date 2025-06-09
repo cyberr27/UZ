@@ -57,6 +57,19 @@ app.get("/", (req, res) => {
   });
 });
 
+// Маршрут для страницы профиля пользователя
+app.get("/profile", (req, res) => {
+  const profilePath = path.join(__dirname, "..", "public", "profile.html");
+  res.sendFile(profilePath, (err) => {
+    if (err) {
+      console.error("Помилка відправки profile.html:", err);
+      res
+        .status(500)
+        .json({ error: "Не вдалося завантажити сторінку профілю" });
+    }
+  });
+});
+
 // Підключаємо маршрути авторизації
 app.use("/api/auth", authRoutes);
 
