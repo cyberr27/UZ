@@ -168,6 +168,13 @@ button:hover {
   height: 100%;
   border-radius: 5%;
 }
+.profile-photo {
+  position: absolute;
+  top: 8%;
+  left: 4%;
+  width: 15%;
+  height: 20%;
+}
 
 .userInfo {
   position: absolute;
