@@ -40,37 +40,36 @@
       <h2 id="my-userProfileText" class="text-2xl font-bold mb-6 text-center">
         Профіль користувача
       </h2>
-      <div class="text-center">
-        <div class="relative mx-auto w-16 h-16">
-          <img
-            id="profile-photo"
-            class="w-16 h-16 rounded-full object-cover hidden"
-            alt="Profile Photo"
-          />
-          <div
-            id="profile-photo-placeholder"
-            class="w-16 h-16 rounded-full bg-gray-300 flex items-center justify-center text-white font-bold text-lg"
-          ></div>
-        </div>
-        <p id="my-lN" class="mt-4"><strong>Прізвище:</strong></p>
-        <p id="profile-lastName" class="text-gray-600"></p>
-        <p id="my-fN" class="mt-2"><strong>Ім'я:</strong></p>
-        <p id="profile-firstName" class="text-gray-600"></p>
-        <p id="my-mN" class="mt-2"><strong>По батькові:</strong></p>
-        <p id="profile-middleName" class="text-gray-600"></p>
-        <p id="my-pp" class="mt-2"><strong>Посада:</strong></p>
-        <p id="profile-position" class="text-gray-600"></p>
-        <p id="mt-peId" class="mt-2"><strong>Табельний номер:</strong></p>
-        <p id="profile-employeeId" class="text-gray-600"></p>
-        <p id="my-pwId" class="mt-2"><strong>ID працівника:</strong></p>
-        <p id="profile-workerId" class="text-gray-600"></p>
-        <button
-          id="close-profile"
-          class="mt-4 bg-gray-500 text-white p-2 rounded hover:bg-gray-600 transition"
-        >
-          Закрити
-        </button>
+
+      <div class="relative mx-auto w-16 h-16">
+        <img
+          id="profile-photo"
+          class="w-16 h-16 rounded-full object-cover hidden"
+          alt="Profile Photo"
+        />
+        <div
+          id="profile-photo-placeholder"
+          class="w-16 h-16 rounded-full bg-gray-300 flex items-center justify-center text-white font-bold text-lg"
+        ></div>
       </div>
+      <p id="my-lN" class="mt-4">Прізвище:</p>
+      <p id="profile-lastName" class="text-gray-600"></p>
+      <p id="my-fN" class="mt-2">Ім'я:</p>
+      <p id="profile-firstName" class="text-gray-600"></p>
+      <p id="my-mN" class="mt-2">По батькові:</p>
+      <p id="profile-middleName" class="text-gray-600"></p>
+      <p id="my-pp" class="mt-2">Посада:</p>
+      <p id="profile-position" class="text-gray-600"></p>
+      <p id="mt-peId" class="mt-2">Табельний номер:</p>
+      <p id="profile-employeeId" class="text-gray-600"></p>
+      <p id="my-pwId" class="mt-2">ID працівника:</p>
+      <p id="profile-workerId" class="text-gray-600"></p>
+      <button
+        id="close-profile"
+        class="mt-4 bg-gray-500 text-white p-2 rounded hover:bg-gray-600 transition"
+      >
+        Закрити
+      </button>
       <script>
         document.addEventListener("DOMContentLoaded", async () => {
           // Получаем параметры из URL
