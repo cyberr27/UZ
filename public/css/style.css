@@ -48,9 +48,18 @@ body.profile-active #auth-container {
   max-width: 500px;
 }
 
-.profile,
 #profile {
   width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.95);
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  backdrop-filter: none;
+}
+.profile {
+  width: 95%;
+  left: 2.5%;
   height: 100%;
   background: rgba(255, 255, 255, 0.95);
   padding: 2rem;
@@ -195,7 +204,7 @@ button:hover {
 }
 #my-lN {
   position: absolute;
-  top: 9.5%;
+  top: 9.7%;
   left: 25%;
 }
 .my-lN {
@@ -213,7 +222,7 @@ button:hover {
 }
 #my-fN {
   position: absolute;
-  top: 16.3%;
+  top: 16.7%;
   left: 25%;
 }
 .my-fN {
@@ -231,7 +240,7 @@ button:hover {
 }
 #my-mN {
   position: absolute;
-  top: 22.3%;
+  top: 22.7%;
   left: 25%;
 }
 .my-mN {
@@ -249,7 +258,7 @@ button:hover {
 }
 #my-pp {
   position: absolute;
-  top: 28.3%;
+  top: 28.7%;
   left: 25%;
 }
 .my-pp {
@@ -267,7 +276,7 @@ button:hover {
 }
 #mt-peId {
   position: absolute;
-  top: 34.3%;
+  top: 34.7%;
   left: 25%;
 }
 .my-id {
@@ -285,7 +294,7 @@ button:hover {
 }
 #my-pwId {
   position: absolute;
-  top: 40.3%;
+  top: 40.7%;
   left: 25%;
 }
 .my-wid {
