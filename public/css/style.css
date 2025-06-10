@@ -1,0 +1,333 @@
+body.bodyBox {
+  background: url("/img/uzImg.jpg") no-repeat center center fixed;
+  background-size: cover;
+  width: 100%;
+  height: 100vh;
+  margin: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+}
+
+body.bodyBox.profile-active {
+  background: none;
+  background-color: #f3f4f6;
+}
+
+#auth-container {
+  background: rgba(255, 255, 255, 0.7);
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  width: 100%;
+  max-width: 500px;
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease-in-out;
+}
+
+body.profile-active #auth-container {
+  max-width: 100%;
+  width: 100%;
+  height: 100vh;
+  padding: 2rem;
+  border-radius: 0;
+  box-shadow: none;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  overflow-y: auto;
+}
+
+.form-container {
+  transition: all 0.3s ease-in-out;
+  width: 100%;
+  max-width: 500px;
+}
+
+.profile,
+#profile {
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.95);
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  backdrop-filter: none;
+}
+
+#chat-container {
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.95);
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  backdrop-filter: none;
+  transition: all 0.3s ease-in-out;
+}
+
+#chat-messages {
+  background: #fff;
+  border-color: #e5e7eb;
+}
+
+.chat-message {
+  padding: 0.5rem;
+  margin: 0.5rem 0;
+  border-radius: 8px;
+  max-width: 80%;
+}
+
+.chat-message.sent {
+  background: #dcf8c6;
+  margin-left: auto;
+}
+
+.chat-message.received {
+  background: #e5e7eb;
+  margin-right: auto;
+}
+
+button {
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+button:hover {
+  transform: translateY(-2px);
+}
+
+#send-chat {
+  position: absolute;
+  left: 87.8%;
+}
+
+#logout {
+  position: absolute;
+  right: 4%;
+  top: 11%;
+  width: 3%;
+  height: 5%;
+  font-size: 10px;
+  padding: 0;
+}
+
+#edit-profile-btn {
+  position: absolute;
+  right: 7.5%;
+  top: 11%;
+  width: 8%;
+  height: 5%;
+  font-size: 10px;
+  padding: 0;
+}
+
+#chat-input {
+  width: 90%;
+}
+
+#chat-btn {
+  position: absolute;
+  left: 8.8%;
+  top: 55%;
+  width: 10%;
+  height: 8%;
+  font-size: 17px;
+  padding: 0;
+}
+
+#back-to-profile,
+#back-to-profile-from-chat {
+  transition: background-color 0.3s ease, transform 0.2s ease;
+  width: 12%;
+  height: 6%;
+  position: absolute;
+  top: 5.5%;
+  right: 4.7%;
+}
+
+#back-to-profile:hover,
+#back-to-profile-from-chat:hover {
+  transform: translateY(-2px);
+}
+
+.hidden {
+  display: none;
+}
+
+#profile-photo-container {
+  position: relative;
+  height: 100%;
+  width: 100%;
+}
+#profile-photo {
+  width: 100%;
+  height: 100%;
+  border-radius: 5%;
+}
+
+.userInfo {
+  position: absolute;
+  left: 4%;
+  top: 11%;
+  width: 20%;
+  height: 40%;
+}
+
+#my-userProfileText,
+.myH {
+  position: absolute;
+  right: 5%;
+  top: 8%;
+  font-weight: 400;
+  font-size: 15px;
+}
+
+#profile-lastName {
+  position: absolute;
+  top: 11%;
+  left: 35%;
+  font-weight: 900;
+  font-size: 20px;
+}
+#my-lN,
+.my-lN {
+  position: absolute;
+  top: 12%;
+  left: 25%;
+}
+
+#profile-firstName {
+  position: absolute;
+  top: 17%;
+  left: 35%;
+  font-weight: 900;
+  font-size: 20px;
+}
+#my-fN,
+.my-fN {
+  position: absolute;
+  top: 18%;
+  left: 25%;
+}
+
+#profile-middleName {
+  position: absolute;
+  top: 23%;
+  left: 35%;
+  font-weight: 900;
+  font-size: 20px;
+}
+#my-mN,
+.my-mN {
+  position: absolute;
+  top: 24%;
+  left: 25%;
+}
+
+#profile-position {
+  position: absolute;
+  top: 29%;
+  left: 35%;
+  font-weight: 600;
+  font-size: 20px;
+}
+#my-pp,
+.my-pp {
+  position: absolute;
+  top: 30%;
+  left: 25%;
+}
+
+#profile-employeeId {
+  position: absolute;
+  top: 35%;
+  left: 37%;
+  font-weight: 600;
+  font-size: 20px;
+}
+#mt-peId,
+.my-id {
+  position: absolute;
+  top: 36%;
+  left: 25%;
+}
+
+#profile-workerId {
+  position: absolute;
+  top: 41%;
+  left: 37%;
+  font-weight: 600;
+  font-size: 20px;
+}
+#my-pwId,
+.my-wid {
+  position: absolute;
+  top: 42%;
+  left: 25%;
+}
+
+input:focus {
+  box-shadow: 0 0 5px rgba(59, 130, 246, 0.5);
+  border-color: #3b82f6;
+}
+
+/* Стили для кликабельного имени пользователя в чате */
+.chat-username {
+  color: #3b82f6; /* Синий цвет, как у ссылок */
+  cursor: pointer; /* Указатель при наведении */
+  text-decoration: underline; /* Подчеркивание для имитации ссылки */
+  transition: color 0.2s ease; /* Плавное изменение цвета */
+}
+
+.chat-username:hover {
+  color: #1d4ed8; /* Темно-синий при наведении */
+}
+
+@media (max-width: 640px) {
+  #auth-container {
+    max-width: 90%;
+    padding: 1.5rem;
+  }
+
+  body.profile-active #auth-container {
+    padding: 1.5rem;
+  }
+
+  #profile {
+    max-width: 95%;
+    padding: 1.5rem;
+  }
+
+  #chat-container {
+    max-width: 95%;
+    padding: 1.5rem;
+  }
+
+  #chat-btn #edit-profile-btn,
+  #logout {
+    width: 15%;
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  #auth-container {
+    padding: 1rem;
+  }
+  body.profile-active #auth-container {
+    padding: 1rem;
+  }
+  h2 {
+    font-size: 1.5rem;
+  }
+  #chat-btn,
+  #edit-profile-btn,
+  #logout {
+    width: 20%;
+    font-size: 10px;
+  }
+}
