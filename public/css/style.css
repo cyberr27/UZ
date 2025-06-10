@@ -176,6 +176,7 @@ button:hover {
   height: 40%;
 }
 
+#my-userProfileText,
 .myH {
   position: absolute;
   right: 5%;
@@ -266,12 +267,6 @@ button:hover {
   position: absolute;
   top: 42%;
   left: 25%;
-}
-
-#my-userProfileText {
-  position: absolute;
-  top: 5%;
-  left: 43%;
 }
 
 input:focus {
