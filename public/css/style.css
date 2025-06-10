@@ -193,7 +193,11 @@ button:hover {
   font-weight: 900;
   font-size: 20px;
 }
-#my-lN,
+#my-lN {
+  position: absolute;
+  top: 10%;
+  left: 25%;
+}
 .my-lN {
   position: absolute;
   top: 12%;
@@ -207,7 +211,11 @@ button:hover {
   font-weight: 900;
   font-size: 20px;
 }
-#my-fN,
+#my-fN {
+  position: absolute;
+  top: 16%;
+  left: 25%;
+}
 .my-fN {
   position: absolute;
   top: 18%;
@@ -221,7 +229,11 @@ button:hover {
   font-weight: 900;
   font-size: 20px;
 }
-#my-mN,
+#my-mN {
+  position: absolute;
+  top: 22%;
+  left: 25%;
+}
 .my-mN {
   position: absolute;
   top: 24%;
@@ -235,7 +247,11 @@ button:hover {
   font-weight: 600;
   font-size: 20px;
 }
-#my-pp,
+#my-pp {
+  position: absolute;
+  top: 28%;
+  left: 25%;
+}
 .my-pp {
   position: absolute;
   top: 30%;
@@ -249,7 +265,11 @@ button:hover {
   font-weight: 600;
   font-size: 20px;
 }
-#mt-peId,
+#mt-peId {
+  position: absolute;
+  top: 34%;
+  left: 25%;
+}
 .my-id {
   position: absolute;
   top: 36%;
@@ -263,7 +283,11 @@ button:hover {
   font-weight: 600;
   font-size: 20px;
 }
-#my-pwId,
+#my-pwId {
+  position: absolute;
+  top: 40%;
+  left: 25%;
+}
 .my-wid {
   position: absolute;
   top: 42%;
