@@ -191,6 +191,7 @@ button:hover {
   font-weight: 900;
   font-size: 20px;
 }
+#my-userProfileText,
 .my-lN {
   position: absolute;
   top: 12%;
