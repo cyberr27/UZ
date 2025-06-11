@@ -60,7 +60,9 @@ body.profile-active #auth-container {
 }
 .profile {
   width: 95%;
+  height: 95%;
   left: 2.5%;
+  top: 2.5%;
   height: 100%;
   background: rgba(255, 255, 255, 0.95);
   padding: 2rem;
