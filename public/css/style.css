@@ -59,9 +59,9 @@ body.profile-active #auth-container {
   backdrop-filter: none;
 }
 .profile {
-  width: 95.5%;
+  width: 95.2%;
   height: 90%;
-  left: 2.2%;
+  left: 2.4%;
   top: 5%;
   background: rgba(255, 255, 255, 0.95);
   padding: 2rem;
