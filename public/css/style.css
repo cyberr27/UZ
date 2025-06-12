@@ -70,7 +70,8 @@ body.profile-active #auth-container {
   backdrop-filter: none;
 }
 
-#chat-container {
+#chat-container,
+#private-messages-container {
   width: 100%;
   height: 100%;
   background: rgba(255, 255, 255, 0.95);
@@ -81,24 +82,28 @@ body.profile-active #auth-container {
   transition: all 0.3s ease-in-out;
 }
 
-#chat-messages {
+#chat-messages,
+#private-messages {
   background: #fff;
   border-color: #e5e7eb;
 }
 
-.chat-message {
+.chat-message,
+.private-message {
   padding: 0.5rem;
   margin: 0.5rem 0;
   border-radius: 8px;
   max-width: 80%;
 }
 
-.chat-message.sent {
+.chat-message.sent,
+.private-message.sent {
   background: #dcf8c6;
   margin-left: auto;
 }
 
-.chat-message.received {
+.chat-message.received,
+.private-message.received {
   background: #e5e7eb;
   margin-right: auto;
 }
@@ -120,7 +125,7 @@ button:hover {
   position: absolute;
   right: 4%;
   top: 11%;
-  width: 3%;
+  width: 5%;
   height: 5%;
   font-size: 10px;
   padding: 0;
@@ -128,13 +133,24 @@ button:hover {
 
 #edit-profile-btn {
   position: absolute;
-  right: 7.5%;
+  right: 10%;
   top: 11%;
   width: 8%;
   height: 5%;
   font-size: 10px;
   padding: 0;
 }
+
+#private-messages-btn {
+  position: absolute;
+  right: 19%;
+  top: 11%;
+  width: 8%;
+  height: 5%;
+  font-size: 10px;
+  padding: 0;
+}
+
 #close-profile {
   position: absolute;
   right: 5.5%;
@@ -160,7 +176,8 @@ button:hover {
 }
 
 #back-to-profile,
-#back-to-profile-from-chat {
+#back-to-profile-from-chat,
+#back-to-profile-from-private {
   transition: background-color 0.3s ease, transform 0.2s ease;
   width: 12%;
   height: 6%;
@@ -170,7 +187,8 @@ button:hover {
 }
 
 #back-to-profile:hover,
-#back-to-profile-from-chat:hover {
+#back-to-profile-from-chat:hover,
+#back-to-profile-from-private:hover {
   transform: translateY(-2px);
 }
 
@@ -327,15 +345,17 @@ input:focus {
 }
 
 /* Стили для кликабельного имени пользователя в чате */
-.chat-username {
-  color: #3b82f6; /* Синий цвет, как у ссылок */
-  cursor: pointer; /* Указатель при наведении */
-  text-decoration: underline; /* Подчеркивание для имитации ссылки */
-  transition: color 0.2s ease; /* Плавное изменение цвета */
+.chat-username,
+.private-username {
+  color: #3b82f6;
+  cursor: pointer;
+  text-decoration: underline;
+  transition: color 0.2s ease;
 }
 
-.chat-username:hover {
-  color: #1d4ed8; /* Темно-синий при наведении */
+.chat-username:hover,
+.private-username:hover {
+  color: #1d4ed8;
 }
 
 @media (max-width: 640px) {
@@ -353,12 +373,15 @@ input:focus {
     padding: 1.5rem;
   }
 
-  #chat-container {
+  #chat-container,
+  #private-messages-container {
     max-width: 95%;
     padding: 1.5rem;
   }
 
-  #chat-btn #edit-profile-btn,
+  #chat-btn,
+  #edit-profile-btn,
+  #private-messages-btn,
   #logout {
     width: 15%;
     font-size: 12px;
@@ -377,6 +400,7 @@ input:focus {
   }
   #chat-btn,
   #edit-profile-btn,
+  #private-messages-btn,
   #logout {
     width: 20%;
     font-size: 10px;

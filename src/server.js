@@ -3,14 +3,15 @@ const mongoose = require("mongoose");
 const cors = require("cors");
 const dotenv = require("dotenv");
 const authRoutes = require("./routes/auth");
+const messageRoutes = require("./routes/messages");
 const path = require("path");
 const jwt = require("jsonwebtoken");
 const cloudinary = require("cloudinary").v2;
 const fileUpload = require("express-fileupload");
 const { WebSocketServer } = require("ws");
 const http = require("http");
-
 const User = require("./models/User");
+const PrivateMessage = require("./models/PrivateMessage");
 
 dotenv.config();
 const app = express();
@@ -27,7 +28,7 @@ try {
     throw new Error("CLOUDINARY_URL is not set in environment variables");
   }
   console.log("Configuring Cloudinary with CLOUDINARY_URL");
-  cloudinary.config(); // Cloudinary сам распарсит CLOUDINARY_URL
+  cloudinary.config();
   console.log("Cloudinary configuration:", {
     cloud_name: cloudinary.config().cloud_name,
     api_key: cloudinary.config().api_key,
@@ -43,7 +44,6 @@ app.use(cors());
 app.use(express.json());
 
 // Обслуговування статичних файлів
-// Указываем путь к папке public в корне проекта
 app.use(express.static(path.join(__dirname, "..", "public")));
 
 // Маршрут для головної сторінки
@@ -70,8 +70,9 @@ app.get("/profile", (req, res) => {
   });
 });
 
-// Підключаємо маршрути авторизації
+// Підключаємо маршрути
 app.use("/api/auth", authRoutes);
+app.use("/api/messages", messageRoutes);
 
 // Маршрут для завантаження фото на Cloudinary
 app.post("/api/auth/upload-photo", async (req, res) => {
@@ -96,7 +97,6 @@ app.post("/api/auth/upload-photo", async (req, res) => {
         .json({ error: "Файл занадто великий (макс. 5MB)" });
     }
 
-    // Завантаження на Cloudinary
     const result = await new Promise((resolve, reject) => {
       const uploadStream = cloudinary.uploader.upload_stream(
         {
@@ -149,10 +149,9 @@ mongoose
 // WebSocket сервер
 const wss = new WebSocketServer({ server });
 
-const clients = new Map(); // Храним подключенных клиентов: workerId -> ws
+const clients = new Map();
 
 wss.on("connection", (ws, req) => {
-  // Аутентификация через токен
   const urlParams = new URLSearchParams(req.url.split("?")[1]);
   const token = urlParams.get("token");
   let userId = null;
@@ -166,7 +165,6 @@ wss.on("connection", (ws, req) => {
     return;
   }
 
-  // Проверяем пользователя в базе
   User.findById(userId)
     .then((user) => {
       if (!user) {
@@ -174,12 +172,10 @@ wss.on("connection", (ws, req) => {
         return;
       }
 
-      // Сохраняем подключение
       clients.set(user.workerId, ws);
       console.log(`User ${user.workerId} connected`);
 
-      // Обработка сообщений
-      ws.on("message", (data) => {
+      ws.on("message", async (data) => {
         try {
           const messageData = JSON.parse(data);
           if (messageData.type === "message") {
@@ -190,19 +186,58 @@ wss.on("connection", (ws, req) => {
               message: messageData.message,
               timestamp: new Date().toISOString(),
             };
-            // Рассылаем сообщение всем подключенным клиентам
             clients.forEach((client, clientId) => {
               if (client.readyState === client.OPEN) {
                 client.send(JSON.stringify(broadcastData));
               }
             });
+          } else if (messageData.type === "private_message") {
+            const recipient = await User.findOne({
+              workerId: messageData.recipientId,
+            });
+            if (!recipient) {
+              ws.send(
+                JSON.stringify({
+                  type: "error",
+                  message: "Отримувача не знайдено",
+                })
+              );
+              return;
+            }
+
+            // Сохраняем приватное сообщение в базе
+            const privateMessage = new PrivateMessage({
+              senderId: user.workerId,
+              senderName: messageData.senderName,
+              recipientId: messageData.recipientId,
+              message: messageData.message,
+              timestamp: messageData.timestamp,
+            });
+            await privateMessage.save();
+
+            // Отправляем сообщение отправителю и получателю
+            const privateData = {
+              type: "private_message",
+              senderId: user.workerId,
+              senderName: messageData.senderName,
+              message: messageData.message,
+              recipientId: messageData.recipientId,
+              timestamp: messageData.timestamp,
+            };
+
+            const recipientWs = clients.get(messageData.recipientId);
+            if (recipientWs && recipientWs.readyState === recipientWs.OPEN) {
+              recipientWs.send(JSON.stringify(privateData));
+            }
+            if (ws.readyState === ws.OPEN) {
+              ws.send(JSON.stringify(privateData));
+            }
           }
         } catch (error) {
           console.error("WebSocket message error:", error.message);
         }
       });
 
-      // Обработка отключения
       ws.on("close", () => {
         clients.delete(user.workerId);
         console.log(`User ${user.workerId} disconnected`);

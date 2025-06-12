@@ -220,6 +220,12 @@
             Спілкування
           </button>
           <button
+            id="private-messages-btn"
+            class="mt-4 bg-indigo-500 text-white p-2 rounded hover:bg-indigo-600 transition"
+          >
+            Приватні повідомлення
+          </button>
+          <button
             id="logout"
             class="mt-4 bg-red-500 text-white p-2 rounded hover:bg-red-600 transition"
           >
@@ -240,7 +246,7 @@
             type="text"
             id="chat-input"
             class="w-full p-2 border rounded-l focus:outline-none focus:ring-2 focus:ring-purple-500"
-            placeholder="Введіть повідомлення..."
+            placeholder="Введіть повідомлення... (для приватного: >ID текст)"
           />
           <button
             id="send-chat"
@@ -252,6 +258,27 @@
         <button
           type="button"
           id="back-to-profile-from-chat"
+          class="w-full bg-gray-500 text-white p-2 rounded hover:bg-gray-600 transition mt-4"
+        >
+          Повернутися
+        </button>
+      </div>
+
+      <!-- Private Messages Container -->
+      <div
+        id="private-messages-container"
+        class="hidden animate__animated animate__fadeIn"
+      >
+        <h3 class="text-xl font-bold mb-4 text-center">
+          Приватні повідомлення
+        </h3>
+        <div
+          id="private-messages"
+          class="h-64 overflow-y-auto p-2 border rounded mb-4"
+        ></div>
+        <button
+          type="button"
+          id="back-to-profile-from-private"
           class="w-full bg-gray-500 text-white p-2 rounded hover:bg-gray-600 transition mt-4"
         >
           Повернутися

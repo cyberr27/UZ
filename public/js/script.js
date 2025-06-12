@@ -11,6 +11,9 @@ document.addEventListener("DOMContentLoaded", () => {
       "profile-edit-container"
     );
     const chatContainer = document.getElementById("chat-container");
+    const privateMessagesContainer = document.getElementById(
+      "private-messages-container"
+    );
     const body = document.body;
 
     if (!token) {
@@ -18,6 +21,7 @@ document.addEventListener("DOMContentLoaded", () => {
       profileContainer.classList.add("hidden");
       profileEditContainer.classList.add("hidden");
       chatContainer.classList.add("hidden");
+      privateMessagesContainer.classList.add("hidden");
       body.classList.remove("profile-active");
       return;
     }
@@ -100,12 +104,14 @@ document.addEventListener("DOMContentLoaded", () => {
           loginFormContainer.classList.add("hidden");
           profileEditContainer.classList.remove("hidden");
           chatContainer.classList.add("hidden");
+          privateMessagesContainer.classList.add("hidden");
           profileContainer.classList.add("hidden");
           body.classList.add("profile-active");
         } else {
           loginFormContainer.classList.add("hidden");
           profileContainer.classList.remove("hidden");
           chatContainer.classList.add("hidden");
+          privateMessagesContainer.classList.add("hidden");
           profileEditContainer.classList.add("hidden");
           body.classList.add("profile-active");
         }
@@ -116,6 +122,7 @@ document.addEventListener("DOMContentLoaded", () => {
         profileContainer.classList.add("hidden");
         profileEditContainer.classList.add("hidden");
         chatContainer.classList.add("hidden");
+        privateMessagesContainer.classList.add("hidden");
         body.classList.remove("profile-active");
       }
     } catch (error) {
@@ -126,6 +133,7 @@ document.addEventListener("DOMContentLoaded", () => {
       profileContainer.classList.add("hidden");
       profileEditContainer.classList.add("hidden");
       chatContainer.classList.add("hidden");
+      privateMessagesContainer.classList.add("hidden");
       body.classList.remove("profile-active");
     }
   };
@@ -135,7 +143,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const token = localStorage.getItem("token");
     if (!token) return;
 
-    // Подключаемся к WebSocket с токеном для аутентификации
     ws = new WebSocket(`wss://${window.location.host}/ws?token=${token}`);
 
     ws.onopen = () => {
@@ -146,6 +153,8 @@ document.addEventListener("DOMContentLoaded", () => {
       const data = JSON.parse(event.data);
       if (data.type === "message") {
         displayMessage(data);
+      } else if (data.type === "private_message") {
+        displayPrivateMessage(data);
       }
     };
 
@@ -166,9 +175,7 @@ document.addEventListener("DOMContentLoaded", () => {
         alert("Токен відсутній. Будь ласка, увійдіть знову.");
         return;
       }
-      // Формируем URL для страницы профиля пользователя
       const profileUrl = `/profile.html?workerId=${workerId}&token=${token}`;
-      // Открываем новую вкладку с проверкой на блокировку всплывающих окон
       const newWindow = window.open(profileUrl, "_blank");
       if (!newWindow) {
         alert(
@@ -189,25 +196,21 @@ document.addEventListener("DOMContentLoaded", () => {
     const isSent = data.senderId === currentUser?.workerId;
     messageDiv.classList.add(isSent ? "sent" : "received");
 
-    // Создаем кликабельный элемент для имени пользователя
     const senderNameSpan = document.createElement("span");
     senderNameSpan.classList.add("chat-username");
     senderNameSpan.textContent = data.senderName || "Анонім";
     senderNameSpan.style.cursor = "pointer";
-    senderNameSpan.title = "Натисніть, щоб переглянути профіль"; // Подсказка при наведении
+    senderNameSpan.title = "Натисніть, щоб переглянути профіль";
 
-    // Добавляем обработчик клика для открытия профиля
     senderNameSpan.addEventListener("click", () => {
       openUserProfileInNewTab(data.senderId);
     });
 
-    // Формируем содержимое сообщения
     messageDiv.appendChild(senderNameSpan);
     const messageText = document.createElement("span");
     messageText.textContent = `: ${data.message}`;
     messageDiv.appendChild(messageText);
 
-    // Добавляем временную метку для лучшей читаемости
     const timestamp = document.createElement("div");
     timestamp.style.fontSize = "0.75rem";
     timestamp.style.color = "#6b7280";
@@ -225,6 +228,84 @@ document.addEventListener("DOMContentLoaded", () => {
     chatMessages.scrollTop = chatMessages.scrollHeight;
   };
 
+  // Отображение приватного сообщения
+  const displayPrivateMessage = (data) => {
+    const privateMessages = document.getElementById("private-messages");
+    const messageDiv = document.createElement("div");
+    messageDiv.classList.add("private-message");
+    const isSent = data.senderId === currentUser?.workerId;
+    messageDiv.classList.add(isSent ? "sent" : "received");
+
+    const senderNameSpan = document.createElement("span");
+    senderNameSpan.classList.add("private-username");
+    senderNameSpan.textContent = data.senderName || "Анонім";
+    senderNameSpan.style.cursor = "pointer";
+    senderNameSpan.title = "Натисніть, щоб переглянути профіль";
+
+    senderNameSpan.addEventListener("click", () => {
+      openUserProfileInNewTab(data.senderId);
+    });
+
+    messageDiv.appendChild(senderNameSpan);
+    const messageText = document.createElement("span");
+    messageText.textContent = `: ${data.message}`;
+    messageDiv.appendChild(messageText);
+
+    const timestamp = document.createElement("div");
+    timestamp.style.fontSize = "0.75rem";
+    timestamp.style.color = "#6b7280";
+    timestamp.style.marginTop = "2px";
+    timestamp.textContent = new Date(data.timestamp).toLocaleString("uk-UA", {
+      hour: "2-digit",
+      minute: "2-digit",
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    });
+    messageDiv.appendChild(timestamp);
+
+    privateMessages.appendChild(messageDiv);
+    privateMessages.scrollTop = privateMessages.scrollHeight;
+  };
+
+  // Загрузка приватных сообщений
+  const loadPrivateMessages = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        alert("Токен відсутній. Будь ласка, увійдіть знову.");
+        return;
+      }
+
+      const response = await fetch("/api/messages/private", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const data = await response.json();
+      if (response.ok) {
+        const privateMessages = document.getElementById("private-messages");
+        privateMessages.innerHTML = "";
+        data.messages.forEach((msg) => {
+          displayPrivateMessage({
+            type: "private_message",
+            senderId: msg.senderId,
+            senderName: msg.senderName,
+            message: msg.message,
+            timestamp: msg.timestamp,
+          });
+        });
+      } else {
+        alert(data.error || "Помилка завантаження приватних повідомлень");
+      }
+    } catch (error) {
+      console.error("Помилка завантаження приватних повідомлень:", error);
+      alert("Помилка завантаження приватних повідомлень: " + error.message);
+    }
+  };
+
   // Вызываем проверку авторизации при загрузке страницы
   checkAuth();
 
@@ -238,15 +319,22 @@ document.addEventListener("DOMContentLoaded", () => {
   );
   const profileContainer = document.getElementById("profile");
   const chatContainer = document.getElementById("chat-container");
+  const privateMessagesContainer = document.getElementById(
+    "private-messages-container"
+  );
   const showRegister = document.getElementById("show-register");
   const showLogin = document.getElementById("show-login");
   const logoutButton = document.getElementById("logout");
   const editProfileBtn = document.getElementById("edit-profile-btn");
   const chatBtn = document.getElementById("chat-btn");
+  const privateMessagesBtn = document.getElementById("private-messages-btn");
   const sendChatBtn = document.getElementById("send-chat");
   const chatInput = document.getElementById("chat-input");
   const backToProfileFromChat = document.getElementById(
     "back-to-profile-from-chat"
+  );
+  const backToProfileFromPrivate = document.getElementById(
+    "back-to-profile-from-private"
   );
   const body = document.body;
 
@@ -255,6 +343,7 @@ document.addEventListener("DOMContentLoaded", () => {
     loginFormContainer.classList.add("hidden");
     registerFormContainer.classList.remove("hidden");
     chatContainer.classList.add("hidden");
+    privateMessagesContainer.classList.add("hidden");
     profileContainer.classList.add("hidden");
     body.classList.remove("profile-active");
   });
@@ -263,6 +352,7 @@ document.addEventListener("DOMContentLoaded", () => {
     registerFormContainer.classList.add("hidden");
     loginFormContainer.classList.remove("hidden");
     chatContainer.classList.add("hidden");
+    privateMessagesContainer.classList.add("hidden");
     profileContainer.classList.add("hidden");
     body.classList.remove("profile-active");
   });
@@ -300,6 +390,7 @@ document.addEventListener("DOMContentLoaded", () => {
         registerFormContainer.classList.add("hidden");
         loginFormContainer.classList.remove("hidden");
         chatContainer.classList.add("hidden");
+        privateMessagesContainer.classList.add("hidden");
         profileContainer.classList.add("hidden");
         body.classList.remove("profile-active");
       } else {
@@ -344,7 +435,6 @@ document.addEventListener("DOMContentLoaded", () => {
         document.getElementById("profile-workerId").textContent =
           data.user.workerId || "Не вказано";
 
-        // Установка фото профиля или заглушки
         const profilePhoto = document.getElementById("profile-photo");
         const placeholder = document.getElementById(
           "profile-photo-placeholder"
@@ -374,7 +464,6 @@ document.addEventListener("DOMContentLoaded", () => {
           profilePhoto.classList.add("hidden");
         }
 
-        // Заполнение формы редактирования
         document.getElementById("edit-firstName").value =
           data.user.firstName || "";
         document.getElementById("edit-lastName").value =
@@ -396,12 +485,14 @@ document.addEventListener("DOMContentLoaded", () => {
           loginFormContainer.classList.add("hidden");
           profileEditContainer.classList.remove("hidden");
           chatContainer.classList.add("hidden");
+          privateMessagesContainer.classList.add("hidden");
           profileContainer.classList.add("hidden");
           body.classList.add("profile-active");
         } else {
           loginFormContainer.classList.add("hidden");
           profileContainer.classList.remove("hidden");
           chatContainer.classList.add("hidden");
+          privateMessagesContainer.classList.add("hidden");
           profileEditContainer.classList.add("hidden");
           body.classList.add("profile-active");
         }
@@ -495,7 +586,6 @@ document.addEventListener("DOMContentLoaded", () => {
         document.getElementById("profile-workerId").textContent =
           data.user.workerId || "Не вказано";
 
-        // Обновление фото профиля или заглушки
         const profilePhoto = document.getElementById("profile-photo");
         const placeholder = document.getElementById(
           "profile-photo-placeholder"
@@ -528,6 +618,7 @@ document.addEventListener("DOMContentLoaded", () => {
         profileEditContainer.classList.add("hidden");
         profileContainer.classList.remove("hidden");
         chatContainer.classList.add("hidden");
+        privateMessagesContainer.classList.add("hidden");
         body.classList.add("profile-active");
       } else {
         alert(data.error || "Помилка оновлення профілю");
@@ -543,6 +634,7 @@ document.addEventListener("DOMContentLoaded", () => {
     profileContainer.classList.add("hidden");
     profileEditContainer.classList.remove("hidden");
     chatContainer.classList.add("hidden");
+    privateMessagesContainer.classList.add("hidden");
     body.classList.add("profile-active");
   });
 
@@ -551,7 +643,21 @@ document.addEventListener("DOMContentLoaded", () => {
     profileContainer.classList.add("hidden");
     chatContainer.classList.remove("hidden");
     profileEditContainer.classList.add("hidden");
+    privateMessagesContainer.classList.add("hidden");
     body.classList.add("profile-active");
+    if (!ws || ws.readyState !== WebSocket.OPEN) {
+      initWebSocket();
+    }
+  });
+
+  // Показ приватных сообщений
+  privateMessagesBtn.addEventListener("click", () => {
+    profileContainer.classList.add("hidden");
+    chatContainer.classList.add("hidden");
+    profileEditContainer.classList.add("hidden");
+    privateMessagesContainer.classList.remove("hidden");
+    body.classList.add("profile-active");
+    loadPrivateMessages();
     if (!ws || ws.readyState !== WebSocket.OPEN) {
       initWebSocket();
     }
@@ -562,6 +668,16 @@ document.addEventListener("DOMContentLoaded", () => {
     chatContainer.classList.add("hidden");
     profileContainer.classList.remove("hidden");
     profileEditContainer.classList.add("hidden");
+    privateMessagesContainer.classList.add("hidden");
+    body.classList.add("profile-active");
+  });
+
+  // Возврат из приватных сообщений в профиль
+  backToProfileFromPrivate.addEventListener("click", () => {
+    privateMessagesContainer.classList.add("hidden");
+    profileContainer.classList.remove("hidden");
+    profileEditContainer.classList.add("hidden");
+    chatContainer.classList.add("hidden");
     body.classList.add("profile-active");
   });
 
@@ -569,17 +685,36 @@ document.addEventListener("DOMContentLoaded", () => {
   sendChatBtn.addEventListener("click", () => {
     const message = chatInput.value.trim();
     if (message && ws && ws.readyState === WebSocket.OPEN) {
-      const data = {
-        type: "message",
-        message: message,
-        senderId: currentUser.workerId,
-        senderName:
-          `${currentUser.firstName || ""} ${
-            currentUser.lastName || ""
-          }`.trim() || "Анонім",
-        timestamp: new Date().toISOString(),
-      };
-      ws.send(JSON.stringify(data));
+      // Проверяем, является ли сообщение приватным (начинается с ">ID")
+      const privateMessageMatch = message.match(/^>(\d+)\s+(.+)/);
+      if (privateMessageMatch) {
+        const recipientId = parseInt(privateMessageMatch[1]);
+        const messageText = privateMessageMatch[2];
+        const data = {
+          type: "private_message",
+          message: messageText,
+          senderId: currentUser.workerId,
+          senderName:
+            `${currentUser.firstName || ""} ${
+              currentUser.lastName || ""
+            }`.trim() || "Анонім",
+          recipientId: recipientId,
+          timestamp: new Date().toISOString(),
+        };
+        ws.send(JSON.stringify(data));
+      } else {
+        const data = {
+          type: "message",
+          message: message,
+          senderId: currentUser.workerId,
+          senderName:
+            `${currentUser.firstName || ""} ${
+              currentUser.lastName || ""
+            }`.trim() || "Анонім",
+          timestamp: new Date().toISOString(),
+        };
+        ws.send(JSON.stringify(data));
+      }
       chatInput.value = "";
     }
   });
@@ -600,6 +735,7 @@ document.addEventListener("DOMContentLoaded", () => {
     profileContainer.classList.add("hidden");
     profileEditContainer.classList.add("hidden");
     chatContainer.classList.add("hidden");
+    privateMessagesContainer.classList.add("hidden");
     loginFormContainer.classList.remove("hidden");
     body.classList.remove("profile-active");
   });
@@ -610,6 +746,7 @@ document.addEventListener("DOMContentLoaded", () => {
     profileEditContainer.classList.add("hidden");
     profileContainer.classList.remove("hidden");
     chatContainer.classList.add("hidden");
+    privateMessagesContainer.classList.add("hidden");
     body.classList.add("profile-active");
   });
 });
