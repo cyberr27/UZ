@@ -3,6 +3,7 @@ const mongoose = require("mongoose");
 const cors = require("cors");
 const dotenv = require("dotenv");
 const authRoutes = require("./routes/auth");
+const messageRoutes = require("./routes/messages");
 const path = require("path");
 const jwt = require("jsonwebtoken");
 const cloudinary = require("cloudinary").v2;
@@ -72,6 +73,9 @@ app.get("/profile", (req, res) => {
 
 // Підключаємо маршрути авторизації
 app.use("/api/auth", authRoutes);
+app.use("/api/messages", messageRoutes);
+
+module.exports = { clients };
 
 // Маршрут для завантаження фото на Cloudinary
 app.post("/api/auth/upload-photo", async (req, res) => {
@@ -190,7 +194,7 @@ wss.on("connection", (ws, req) => {
               message: messageData.message,
               timestamp: new Date().toISOString(),
             };
-            // Рассылаем сообщение всем подключенным клиентам
+            // Рассылаем общее сообщение всем подключенным клиентам
             clients.forEach((client, clientId) => {
               if (client.readyState === client.OPEN) {
                 client.send(JSON.stringify(broadcastData));

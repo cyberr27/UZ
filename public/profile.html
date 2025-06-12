@@ -56,6 +56,12 @@
       >
         Закрити
       </button>
+      <button
+        id="send-private-message-btn"
+        class="mt-4 bg-indigo-500 text-white p-2 rounded hover:bg-indigo-600 transition"
+      >
+        Приватне повідомлення
+      </button>
       <script>
         document.addEventListener("DOMContentLoaded", async () => {
           // Получаем параметры из URL
@@ -140,6 +146,37 @@
               window.close();
             });
         });
+        // Обработчик кнопки отправки приватного сообщения
+        document
+          .getElementById("send-private-message-btn")
+          .addEventListener("click", () => {
+            const message = prompt("Введіть приватне повідомлення:");
+            if (message && message.trim()) {
+              const token = urlParams.get("token");
+              fetch("/api/messages/private", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({
+                  recipientId: workerId,
+                  message: message.trim(),
+                }),
+              })
+                .then((response) => response.json())
+                .then((data) => {
+                  if (response.ok) {
+                    alert("Приватне повідомлення надіслано!");
+                  } else {
+                    alert(data.error || "Помилка надсилання повідомлення");
+                  }
+                })
+                .catch((error) => {
+                  alert("Помилка надсилання повідомлення: " + error.message);
+                });
+            }
+          });
       </script>
     </div>
   </body>
