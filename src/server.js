@@ -75,8 +75,6 @@ app.get("/profile", (req, res) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/messages", messageRoutes);
 
-module.exports = { clients };
-
 // Маршрут для завантаження фото на Cloudinary
 app.post("/api/auth/upload-photo", async (req, res) => {
   try {
@@ -223,3 +221,5 @@ const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
+
+module.exports = { clients };
