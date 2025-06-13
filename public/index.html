@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="uk">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Авторизація та реєстрація</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/css/style.css" />
+  </head>
+  <body class="bodyBox">
+    <div
+      id="auth-container"
+      class="bg-white p-8 rounded-lg shadow-lg w-full max-w-md"
+    >
+      <!-- Login Form -->
+      <div
+        id="login-form"
+        class="form-container animate__animated animate__fadeIn"
+      >
+        <h2 class="text-2xl font-bold mb-6 text-center">Вхід</h2>
+        <form id="login">
+          <div class="mb-4">
+            <label class="block text-gray-700">Електронна пошта</label>
+            <input
+              type="email"
+              id="login-email"
+              class="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
+            />
+          </div>
+          <div class="mb-4">
+            <label class="block text-gray-700">Пароль</label>
+            <input
+              type="password"
+              id="login-password"
+              class="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
+            />
+          </div>
+          <button
+            type="submit"
+            class="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600 transition"
+          >
+            Увійти
+          </button>
+        </form>
+        <p class="mt-4 text-center">
+          Немає облікового запису?
+          <a href="#" id="show-register" class="text-blue-500 hover:underline"
+            >Зареєструватися</a
+          >
+        </p>
+      </div>
+
+      <!-- Register Form -->
+      <div
+        id="register-form"
+        class="form-container hidden animate__animated animate__fadeIn"
+      >
+        <h2 class="text-2xl font-bold mb-6 text-center">Реєстрація</h2>
+        <form id="register">
+          <div class="mb-4">
+            <label class="block text-gray-700">Електронна пошта</label>
+            <input
+              type="email"
+              id="register-email"
+              class="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
+            />
+          </div>
+          <div class="mb-4">
+            <label class="block text-gray-700">Пароль</label>
+            <input
+              type="password"
+              id="register-password"
+              class="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
+            />
+          </div>
+          <button
+            type="submit"
+            class="w-full bg-green-500 text-white p-2 rounded hover:bg-green-600 transition"
+          >
+            Зареєструватися
+          </button>
+        </form>
+        <p class="mt-4 text-center">
+          Вже є обліковий запис?
+          <a href="#" id="show-login" class="text-blue-500 hover:underline"
+            >Увійти</a
+          >
+        </p>
+      </div>
+
+      <!-- Profile Edit Form -->
+      <div
+        id="profile-edit-container"
+        class="form-container hidden animate__animated animate__fadeIn"
+      >
+        <h2 class="text-2xl font-bold mb-6 text-center">Редагувати профіль</h2>
+        <form id="profile-edit">
+          <div class="mb-4">
+            <label class="block text-gray-700">Ім'я</label>
+            <input
+              type="text"
+              id="edit-firstName"
+              class="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <div class="mb-4">
+            <label class="block text-gray-700">Прізвище</label>
+            <input
+              type="text"
+              id="edit-lastName"
+              class="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <div class="mb-4">
+            <label class="block text-gray-700">По батькові</label>
+            <input
+              type="text"
+              id="edit-middleName"
+              class="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <div class="mb-4">
+            <label class="block text-gray-700">Посада</label>
+            <input
+              type="text"
+              id="edit-position"
+              class="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <div class="mb-4">
+            <label class="block text-gray-700">Табельний номер</label>
+            <input
+              type="text"
+              id="edit-employeeId"
+              class="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <div class="mb-4">
+            <label class="block text-gray-700">Фото профілю</label>
+            <input
+              type="file"
+              id="edit-photo"
+              accept="image/*"
+              class="w-full p-2 border rounded"
+            />
+          </div>
+          <button
+            type="submit"
+            class="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600 transition"
+          >
+            Зберегти зміни
+          </button>
+          <button
+            type="button"
+            id="back-to-profile"
+            class="w-full bg-gray-500 text-white p-2 rounded hover:bg-gray-600 transition mt-4"
+          >
+            Повернутися
+          </button>
+        </form>
+      </div>
+
+      <!-- Profile Page -->
+      <div
+        id="profile"
+        class="hidden bg-white p-8 rounded-lg shadow-lg w-[80%] mx-[10%] animate__animated animate__fadeIn"
+      >
+        <div class="flex justify-end items-center mb-6">
+          <div class="userInfo">
+            <div id="profile-photo-container" class="relative">
+              <img
+                id="profile-photo"
+                class="w-16 h-16 rounded-full object-cover hidden"
+                alt="Profile Photo"
+              />
+              <div
+                id="profile-photo-placeholder"
+                class="w-16 h-16 rounded-full bg-gray-300 flex items-center justify-center text-white font-bold text-lg"
+              ></div>
+            </div>
+          </div>
+        </div>
+        <h2 class="text-2xl font-bold mb-6 text-center myH">
+          Особистий кабінет :
+        </h2>
+        <div class="text-center">
+          <p class="my-lN">Прізвище :</p>
+          <p id="profile-lastName" class="text-gray-600"></p>
+          <p class="my-fN">Ім'я :</p>
+          <p id="profile-firstName" class="text-gray-600"></p>
+          <p class="my-mN">По батькові :</p>
+          <p id="profile-middleName" class="text-gray-600"></p>
+          <p class="my-pp">Посада :</p>
+          <p id="profile-position" class="text-gray-600"></p>
+          <p class="my-id">Табельний номер :</p>
+          <p id="profile-employeeId" class="text-gray-600"></p>
+          <p class="my-wid">ID працівника :</p>
+          <p id="profile-workerId" class="text-gray-600"></p>
+          <button
+            id="edit-profile-btn"
+            class="mt-4 bg-blue-500 text-white p-2 rounded hover:bg-blue-600 transition"
+          >
+            Редагувати профіль
+          </button>
+          <button
+            id="chat-btn"
+            class="mt-4 bg-purple-500 text-white p-2 rounded hover:bg-purple-600 transition"
+          >
+            Спілкування
+          </button>
+          <button
+            id="logout"
+            class="mt-4 bg-red-500 text-white p-2 rounded hover:bg-red-600 transition"
+          >
+            Вийти
+          </button>
+        </div>
+      </div>
+
+      <!-- Chat Container -->
+      <div id="chat-container" class="hidden animate__animated animate__fadeIn">
+        <h3 class="text-xl font-bold mb-4 text-center">Чат</h3>
+        <div
+          id="chat-messages"
+          class="h-64 overflow-y-auto p-2 border rounded mb-4"
+        ></div>
+        <div class="flex">
+          <input
+            type="text"
+            id="chat-input"
+            class="w-full p-2 border rounded-l focus:outline-none focus:ring-2 focus:ring-purple-500"
+            placeholder="Введіть повідомлення... (для приватного: >ID текст)"
+          />
+          <button
+            id="send-chat"
+            class="bg-purple-500 text-white p-2 rounded-r hover:bg-purple-600 transition"
+          >
+            Надіслати
+          </button>
+          <button
+            id="private-messages-btn"
+            class="mt-4 bg-indigo-500 text-white p-2 rounded hover:bg-indigo-600 transition"
+          >
+            Приватні повідомлення
+          </button>
+        </div>
+        <button
+          type="button"
+          id="back-to-profile-from-chat"
+          class="w-full bg-gray-500 text-white p-2 rounded hover:bg-gray-600 transition mt-4"
+        >
+          Повернутися
+        </button>
+      </div>
+
+      <!-- Private Messages Container -->
+      <div
+        id="private-messages-container"
+        class="hidden animate__animated animate__fadeIn"
+      >
+        <h3 class="text-xl font-bold mb-4 text-center">
+          Приватні повідомлення
+        </h3>
+        <div
+          id="private-messages"
+          class="h-64 overflow-y-auto p-2 border rounded mb-4"
+        ></div>
+        <button
+          type="button"
+          id="back-to-profile-from-private"
+          class="w-full bg-gray-500 text-white p-2 rounded hover:bg-gray-600 transition mt-4"
+        >
+          Повернутися
+        </button>
+      </div>
+    </div>
+    <script src="/js/script.js"></script>
+  </body>
+</html>
