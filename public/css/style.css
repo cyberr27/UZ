@@ -158,20 +158,30 @@ button:hover {
 }
 
 #qr-code-container {
+  position: absolute;
+  top: 10%;
+  left: 48%;
   display: flex;
   justify-content: center;
   align-items: center;
-  width: 100px;
-  height: 100px;
+  width: 15%;
+  height: 30%;
   background: #fff;
   border: 1px solid #e5e7eb;
   border-radius: 8px;
 }
 
+.yourQRcode {
+  position:absolute;
+  top: 20%;
+  left: 19%;
+  color: black;
+}
+
 #download-qr-btn {
   position: absolute;
-  right: 19%;
-  top: 11%;
+  right: 5%;
+  top: 18%;
   width: 8%;
   height: 5%;
   font-size: 10px;

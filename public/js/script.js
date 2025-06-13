@@ -692,9 +692,6 @@ document.addEventListener("DOMContentLoaded", () => {
     body.classList.add("profile-active");
   });
 
-  // Обработчик для кнопки генерации QR-кода
-  generateQrBtn.addEventListener("click", generateQRCode);
-
   // Показ чата
   chatBtn.addEventListener("click", () => {
     profileContainer.classList.add("hidden");
