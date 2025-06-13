@@ -82,10 +82,14 @@ body.profile-active #auth-container {
   transition: all 0.3s ease-in-out;
 }
 
-#chat-messages,
+#chat-messages {
+  background: #fff;
+  border-color: #e5e7eb;
+}
 #private-messages {
   background: #fff;
   border-color: #e5e7eb;
+  height: 100%;
 }
 
 .chat-message,
