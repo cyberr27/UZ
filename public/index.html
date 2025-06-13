@@ -13,6 +13,8 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="/css/style.css" />
+    <!-- Добавляем библиотеку qrcode.js -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.0/build/qrcode.min.js"></script>
   </head>
   <body class="bodyBox">
     <div
@@ -213,6 +215,13 @@
           >
             Редагувати профіль
           </button>
+          <button
+            id="generate-qr-btn"
+            class="mt-4 bg-green-500 text-white p-2 rounded hover:bg-green-600 transition"
+          >
+            Сгенерировать QR-код
+          </button>
+          <div id="qr-code-container" class="mt-4"></div>
           <button
             id="chat-btn"
             class="mt-4 bg-purple-500 text-white p-2 rounded hover:bg-purple-600 transition"

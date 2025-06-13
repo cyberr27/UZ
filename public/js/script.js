@@ -306,6 +306,25 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   };
 
+  // Обработчик для генерации QR-кода
+  const generateQRCode = () => {
+    if (!currentUser?.workerId) {
+      alert("ID користувача недоступний. Спробуйте увійти знову.");
+      return;
+    }
+    const qrContainer = document.getElementById("qr-code-container");
+    qrContainer.innerHTML = ""; // Очищаем контейнер перед генерацией
+    const profileUrl = `${window.location.origin}/profile.html?workerId=${currentUser.workerId}`;
+    QRCode.toCanvas(profileUrl, { width: 200, margin: 2 }, (error, canvas) => {
+      if (error) {
+        console.error("Ошибка генерации QR-кода:", error);
+        alert("Помилка генерації QR-коду");
+        return;
+      }
+      qrContainer.appendChild(canvas);
+    });
+  };
+
   // Вызываем проверку авторизации при загрузке страницы
   checkAuth();
 
@@ -326,6 +345,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const showLogin = document.getElementById("show-login");
   const logoutButton = document.getElementById("logout");
   const editProfileBtn = document.getElementById("edit-profile-btn");
+  const generateQrBtn = document.getElementById("generate-qr-btn");
   const chatBtn = document.getElementById("chat-btn");
   const privateMessagesBtn = document.getElementById("private-messages-btn");
   const sendChatBtn = document.getElementById("send-chat");
@@ -637,6 +657,9 @@ document.addEventListener("DOMContentLoaded", () => {
     privateMessagesContainer.classList.add("hidden");
     body.classList.add("profile-active");
   });
+
+  // Обработчик для кнопки генерации QR-кода
+  generateQrBtn.addEventListener("click", generateQRCode);
 
   // Показ чата
   chatBtn.addEventListener("click", () => {

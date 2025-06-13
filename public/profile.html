@@ -13,6 +13,8 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="/css/style.css" />
+    <!-- Добавляем библиотеку qrcode.js -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.0/build/qrcode.min.js"></script>
     <style>
       #bodyBox {
         background: rgba(255, 255, 255, 0.95);
@@ -50,6 +52,13 @@
       <p id="profile-employeeId" class="text-gray-600"></p>
       <p id="my-pwId" class="mt-2">ID працівника :</p>
       <p id="profile-workerId" class="text-gray-600"></p>
+      <button
+        id="generate-qr-btn"
+        class="mt-4 bg-green-500 text-white p-2 rounded hover:bg-green-600 transition"
+      >
+        Сгенерировать QR-код
+      </button>
+      <div id="qr-code-container" class="mt-4"></div>
       <button
         id="close-profile"
         class="mt-4 bg-gray-500 text-white p-2 rounded hover:bg-gray-600 transition"
@@ -123,6 +132,28 @@
                 placeholder.classList.remove("hidden");
                 photo.classList.add("hidden");
               }
+
+              // Обработчик для генерации QR-кода
+              document
+                .getElementById("generate-qr-btn")
+                .addEventListener("click", () => {
+                  const qrContainer =
+                    document.getElementById("qr-code-container");
+                  qrContainer.innerHTML = ""; // Очищаем контейнер перед генерацией
+                  const profileUrl = `${window.location.origin}/profile.html?workerId=${workerId}`;
+                  QRCode.toCanvas(
+                    profileUrl,
+                    { width: 200, margin: 2 },
+                    (error, canvas) => {
+                      if (error) {
+                        console.error("Ошибка генерации QR-кода:", error);
+                        alert("Помилка генерації QR-коду");
+                        return;
+                      }
+                      qrContainer.appendChild(canvas);
+                    }
+                  );
+                });
             } else {
               alert(data.error || "Помилка завантаження профілю");
               window.close();
