@@ -672,13 +672,16 @@ document.addEventListener("DOMContentLoaded", () => {
     body.classList.add("profile-active");
   });
 
-  // Возврат из приватных сообщений в профиль
+  // Возврат из приватных сообщений в чат
   backToProfileFromPrivate.addEventListener("click", () => {
     privateMessagesContainer.classList.add("hidden");
-    profileContainer.classList.remove("hidden");
+    chatContainer.classList.remove("hidden");
+    profileContainer.classList.add("hidden");
     profileEditContainer.classList.add("hidden");
-    chatContainer.classList.add("hidden");
     body.classList.add("profile-active");
+    if (!ws || ws.readyState !== WebSocket.OPEN) {
+      initWebSocket();
+    }
   });
 
   // Отправка сообщения
