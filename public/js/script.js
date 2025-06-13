@@ -93,6 +93,25 @@ document.addEventListener("DOMContentLoaded", () => {
         document.getElementById("edit-employeeId").value =
           data.user.employeeId || "";
 
+        // Автоматическая генерация QR-кода
+        if (data.user.workerId) {
+          const qrContainer = document.getElementById("qr-code-container");
+          qrContainer.innerHTML = "";
+          const profileUrl = `${window.location.origin}/profile.html?workerId=${data.user.workerId}`;
+          QRCode.toCanvas(
+            profileUrl,
+            { width: 100, margin: 2 },
+            (error, canvas) => {
+              if (error) {
+                console.error("Ошибка генерации QR-кода:", error);
+                alert("Помилка генерації QR-коду");
+                return;
+              }
+              qrContainer.appendChild(canvas);
+            }
+          );
+        }
+
         // Показываем профиль или форму редактирования
         if (
           !data.user.firstName &&
@@ -135,6 +154,20 @@ document.addEventListener("DOMContentLoaded", () => {
       chatContainer.classList.add("hidden");
       privateMessagesContainer.classList.add("hidden");
       body.classList.remove("profile-active");
+    }
+  };
+
+  // Функция для скачивания QR-кода
+  const downloadQRCode = () => {
+    const qrContainer = document.getElementById("qr-code-container");
+    const qrCanvas = qrContainer.querySelector("canvas");
+    if (qrCanvas) {
+      const link = document.createElement("a");
+      link.href = qrCanvas.toDataURL("image/png");
+      link.download = `qr-code-${currentUser?.workerId || "profile"}.png`;
+      link.click();
+    } else {
+      alert("QR-код не сгенерирован");
     }
   };
 
@@ -328,6 +361,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // Вызываем проверку авторизации при загрузке страницы
   checkAuth();
 
+  // Обработчики событий
   const loginForm = document.getElementById("login");
   const registerForm = document.getElementById("register");
   const profileEditForm = document.getElementById("profile-edit");
@@ -345,7 +379,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const showLogin = document.getElementById("show-login");
   const logoutButton = document.getElementById("logout");
   const editProfileBtn = document.getElementById("edit-profile-btn");
-  const generateQrBtn = document.getElementById("generate-qr-btn");
+  const downloadQrBtn = document.getElementById("download-qr-btn");
   const chatBtn = document.getElementById("chat-btn");
   const privateMessagesBtn = document.getElementById("private-messages-btn");
   const sendChatBtn = document.getElementById("send-chat");
@@ -775,4 +809,8 @@ document.addEventListener("DOMContentLoaded", () => {
     privateMessagesContainer.classList.add("hidden");
     body.classList.add("profile-active");
   });
+
+  if (downloadQrBtn) {
+    downloadQrBtn.addEventListener("click", downloadQRCode);
+  }
 });

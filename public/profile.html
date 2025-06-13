@@ -13,7 +13,6 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="/css/style.css" />
-    <!-- Добавляем библиотеку qrcode.js -->
     <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.0/build/qrcode.min.js"></script>
     <style>
       #bodyBox {
@@ -28,17 +27,19 @@
       <h2 id="my-userProfileText" class="text-2xl font-bold mb-6 text-center">
         Профіль користувача :
       </h2>
-
-      <div class="relative mx-auto w-16 h-16 my-ppp">
-        <img
-          id="profile-photo"
-          class="w-16 h-16 rounded-full object-cover hidden"
-          alt="Profile Photo"
-        />
-        <div
-          id="profile-photo-placeholder"
-          class="w-16 h-16 rounded-full bg-gray-300 flex items-center justify-center text-white font-bold text-lg"
-        ></div>
+      <div class="relative mx-auto my-ppp flex">
+        <div class="relative">
+          <img
+            id="profile-photo"
+            class="w-16 h-16 rounded-full object-cover hidden"
+            alt="Profile Photo"
+          />
+          <div
+            id="profile-photo-placeholder"
+            class="w-16 h-16 rounded-full bg-gray-300 flex items-center justify-center text-white font-bold text-lg"
+          ></div>
+        </div>
+        <div id="qr-code-container" class="ml-4"></div>
       </div>
       <p id="my-lN" class="mt-4">Прізвище :</p>
       <p id="profile-lastName" class="text-gray-600"></p>
@@ -53,125 +54,130 @@
       <p id="my-pwId" class="mt-2">ID працівника :</p>
       <p id="profile-workerId" class="text-gray-600"></p>
       <button
-        id="generate-qr-btn"
+        id="download-qr-btn"
         class="mt-4 bg-green-500 text-white p-2 rounded hover:bg-green-600 transition"
       >
-        Сгенерировать QR-код
+        Скачать QR-код
       </button>
-      <div id="qr-code-container" class="mt-4"></div>
       <button
         id="close-profile"
         class="mt-4 bg-gray-500 text-white p-2 rounded hover:bg-gray-600 transition"
       >
         Закрити
       </button>
-      <script>
-        document.addEventListener("DOMContentLoaded", async () => {
-          // Получаем параметры из URL
-          const urlParams = new URLSearchParams(window.location.search);
-          const workerId = urlParams.get("workerId");
-          const token = urlParams.get("token");
+    </div>
+    <script>
+      document.addEventListener("DOMContentLoaded", async () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const workerId = urlParams.get("workerId");
+        const token = urlParams.get("token");
 
-          if (!workerId || !token) {
-            alert("Недостатньо даних для завантаження профілю");
-            window.close();
-            return;
-          }
+        if (!workerId || !token) {
+          alert("Недостатньо даних для завантаження профілю");
+          window.close();
+          return;
+        }
 
-          try {
-            const response = await fetch(`/api/auth/user/${workerId}`, {
-              method: "GET",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`,
-              },
-            });
-            const data = await response.json();
-            if (response.ok) {
-              const user = data.user;
-              // Заполнение данных профиля
-              document.getElementById("profile-lastName").textContent =
-                user.lastName || "Не вказано";
-              document.getElementById("profile-firstName").textContent =
-                user.firstName || "Не вказано";
-              document.getElementById("profile-middleName").textContent =
-                user.middleName || "Не вказано";
-              document.getElementById("profile-position").textContent =
-                user.position || "Не вказано";
-              document.getElementById("profile-employeeId").textContent =
-                user.employeeId || "Не вказано";
-              document.getElementById("profile-workerId").textContent =
-                user.workerId || "Не вказано";
+        try {
+          const response = await fetch(`/api/auth/user/${workerId}`, {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          });
+          const data = await response.json();
+          if (response.ok) {
+            const user = data.user;
+            document.getElementById("profile-lastName").textContent =
+              user.lastName || "Не вказано";
+            document.getElementById("profile-firstName").textContent =
+              user.firstName || "Не вказано";
+            document.getElementById("profile-middleName").textContent =
+              user.middleName || "Не вказано";
+            document.getElementById("profile-position").textContent =
+              user.position || "Не вказано";
+            document.getElementById("profile-employeeId").textContent =
+              user.employeeId || "Не вказано";
+            document.getElementById("profile-workerId").textContent =
+              user.workerId || "Не вказано";
 
-              // Обновление фото профиля или заглушки
-              const photo = document.getElementById("profile-photo");
-              const placeholder = document.getElementById(
-                "profile-photo-placeholder"
-              );
-              if (user.photo) {
-                const photoUrl = `${user.photo}?t=${Date.now()}`;
-                photo.src = photoUrl;
-                photo.classList.remove("hidden");
-                placeholder.classList.add("hidden");
-                photo.onerror = () => {
-                  console.error(
-                    `Помилка завантаження зображення: ${photoUrl}. Перевірте URL Cloudinary`
-                  );
-                  const initials = `${user.firstName?.charAt(0) || ""}${
-                    user.lastName?.charAt(0) || ""
-                  }`.toUpperCase();
-                  placeholder.textContent = initials || "НВ";
-                  placeholder.classList.remove("hidden");
-                  photo.classList.add("hidden");
-                };
-              } else {
+            const photo = document.getElementById("profile-photo");
+            const placeholder = document.getElementById(
+              "profile-photo-placeholder"
+            );
+            if (user.photo) {
+              const photoUrl = `${user.photo}?t=${Date.now()}`;
+              photo.src = photoUrl;
+              photo.classList.remove("hidden");
+              placeholder.classList.add("hidden");
+              photo.onerror = () => {
+                console.error(
+                  `Помилка завантаження зображення: ${photoUrl}. Перевірте URL Cloudinary`
+                );
                 const initials = `${user.firstName?.charAt(0) || ""}${
                   user.lastName?.charAt(0) || ""
                 }`.toUpperCase();
                 placeholder.textContent = initials || "НВ";
                 placeholder.classList.remove("hidden");
                 photo.classList.add("hidden");
-              }
-
-              // Обработчик для генерации QR-кода
-              document
-                .getElementById("generate-qr-btn")
-                .addEventListener("click", () => {
-                  const qrContainer =
-                    document.getElementById("qr-code-container");
-                  qrContainer.innerHTML = ""; // Очищаем контейнер перед генерацией
-                  const profileUrl = `${window.location.origin}/profile.html?workerId=${workerId}`;
-                  QRCode.toCanvas(
-                    profileUrl,
-                    { width: 200, margin: 2 },
-                    (error, canvas) => {
-                      if (error) {
-                        console.error("Ошибка генерации QR-кода:", error);
-                        alert("Помилка генерації QR-коду");
-                        return;
-                      }
-                      qrContainer.appendChild(canvas);
-                    }
-                  );
-                });
+              };
             } else {
-              alert(data.error || "Помилка завантаження профілю");
-              window.close();
+              const initials = `${user.firstName?.charAt(0) || ""}${
+                user.lastName?.charAt(0) || ""
+              }`.toUpperCase();
+              placeholder.textContent = initials || "НВ";
+              placeholder.classList.remove("hidden");
+              photo.classList.add("hidden");
             }
-          } catch (error) {
-            console.error("Помилка завантаження профілю:", error);
-            alert("Помилка завантаження профілю: " + error.message);
+
+            // Автоматическая генерация QR-кода
+            const qrContainer = document.getElementById("qr-code-container");
+            qrContainer.innerHTML = "";
+            const profileUrl = `${window.location.origin}/profile.html?workerId=${workerId}`;
+            QRCode.toCanvas(
+              profileUrl,
+              { width: 100, margin: 2 },
+              (error, canvas) => {
+                if (error) {
+                  console.error("Ошибка генерации QR-кода:", error);
+                  alert("Помилка генерації QR-коду");
+                  return;
+                }
+                qrContainer.appendChild(canvas);
+              }
+            );
+
+            // Обработчик для скачивания QR-кода
+            document
+              .getElementById("download-qr-btn")
+              .addEventListener("click", () => {
+                const qrCanvas = qrContainer.querySelector("canvas");
+                if (qrCanvas) {
+                  const link = document.createElement("a");
+                  link.href = qrCanvas.toDataURL("image/png");
+                  link.download = `qr-code-${workerId}.png`;
+                  link.click();
+                } else {
+                  alert("QR-код не сгенерирован");
+                }
+              });
+          } else {
+            alert(data.error || "Помилка завантаження профілю");
             window.close();
           }
+        } catch (error) {
+          console.error("Помилка завантаження профілю:", error);
+          alert("Помилка завантаження профілю: " + error.message);
+          window.close();
+        }
 
-          // Закрытие вкладки по кнопке
-          document
-            .getElementById("close-profile")
-            .addEventListener("click", () => {
-              window.close();
-            });
-        });
-      </script>
-    </div>
+        document
+          .getElementById("close-profile")
+          .addEventListener("click", () => {
+            window.close();
+          });
+      });
+    </script>
   </body>
 </html>
