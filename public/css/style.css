@@ -85,11 +85,12 @@ body.profile-active #auth-container {
 #chat-messages {
   background: #fff;
   border-color: #e5e7eb;
+  height: 62%;
 }
 #private-messages {
   background: #fff;
   border-color: #e5e7eb;
-  height: 94%;
+  height: 92%;
 }
 
 .chat-message,
@@ -123,6 +124,7 @@ button:hover {
 #send-chat {
   position: absolute;
   left: 87.8%;
+  top: 70%;
 }
 
 #logout {
@@ -166,7 +168,9 @@ button:hover {
 }
 
 #chat-input {
-  width: 90%;
+  width: 82%;
+  position: absolute;
+  top: 70%;
 }
 
 #chat-btn {
@@ -343,6 +347,12 @@ button:hover {
   left: 25%;
 }
 
+#qrcode {
+  margin: 1rem auto;
+  display: flex;
+  justify-content: center;
+}
+
 input:focus {
   box-shadow: 0 0 5px rgba(59, 130, 246, 0.5);
   border-color: #3b82f6;
@@ -386,9 +396,15 @@ input:focus {
   #chat-btn,
   #edit-profile-btn,
   #private-messages-btn,
-  #logout {
+  #logout,
+  #download-qr {
     width: 15%;
     font-size: 12px;
+  }
+
+  #qrcode {
+    width: 150px;
+    height: 150px;
   }
 }
 
@@ -405,8 +421,13 @@ input:focus {
   #chat-btn,
   #edit-profile-btn,
   #private-messages-btn,
-  #logout {
+  #logout,
+  #download-qr {
     width: 20%;
     font-size: 10px;
+  }
+  #qrcode {
+    width: 120px;
+    height: 120px;
   }
 }

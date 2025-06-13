@@ -13,6 +13,8 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="/css/style.css" />
+    <!-- Подключение библиотеки qrcode -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.0/build/qrcode.min.js"></script>
   </head>
   <body class="bodyBox">
     <div
@@ -207,6 +209,17 @@
           <p id="profile-employeeId" class="text-gray-600"></p>
           <p class="my-wid">ID працівника :</p>
           <p id="profile-workerId" class="text-gray-600"></p>
+          <!-- QR-код и кнопка скачивания -->
+          <div class="mt-4">
+            <p class="text-gray-700">Ваш QR-код:</p>
+            <div id="qrcode" class="mx-auto w-48 h-48"></div>
+            <button
+              id="download-qr"
+              class="mt-2 bg-green-500 text-white p-2 rounded hover:bg-green-600 transition"
+            >
+              Завантажити QR-код
+            </button>
+          </div>
           <button
             id="edit-profile-btn"
             class="mt-4 bg-blue-500 text-white p-2 rounded hover:bg-blue-600 transition"
@@ -223,7 +236,7 @@
             id="logout"
             class="mt-4 bg-red-500 text-white p-2 rounded hover:bg-red-600 transition"
           >
-            Вийти
+            Вийтиvoices
           </button>
         </div>
       </div>
