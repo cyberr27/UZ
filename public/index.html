@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="uk">
   <head>
@@ -212,7 +213,10 @@
           <!-- QR-код и кнопка скачивания -->
           <div class="mt-4">
             <p class="text-gray-700">Ваш QR-код:</p>
-            <div id="qrcode" class="mx-auto w-48 h-48"></div>
+            <div
+              id="qrcode"
+              class="mx-auto w-48 h-48 bg-white border border-gray-300"
+            ></div>
             <button
               id="download-qr"
               class="mt-2 bg-green-500 text-white p-2 rounded hover:bg-green-600 transition"
@@ -236,7 +240,7 @@
             id="logout"
             class="mt-4 bg-red-500 text-white p-2 rounded hover:bg-red-600 transition"
           >
-            Вийтиvoices
+            Вийти
           </button>
         </div>
       </div>
@@ -266,38 +270,42 @@
             class="mt-4 bg-indigo-500 text-white p-2 rounded hover:bg-indigo-600 transition"
           >
             Приватні повідомлення
-          </button>
-        </div>
-        <button
-          type="button"
-          id="back-to-profile-from-chat"
-          class="w-full bg-gray-500 text-white p-2 rounded hover:bg-gray-600 transition mt-4"
-        >
-          Повернутися
-        </button>
-      </div>
+                  </button>
+                  <button
+                    type="button"
+                    id="back-to-profile-from-chat"
+                    class="w-full bg-gray-500 text-white p-2 rounded hover:bg-gray-600 transition mt-4"
+                  >
+                    Повернутися
+                  </button>
+                </div>
 
-      <!-- Private Messages Container -->
-      <div
-        id="private-messages-container"
-        class="hidden animate__animated animate__fadeIn"
-      >
-        <h3 class="text-xl font-bold mb-4 text-center">
-          Приватні повідомлення
-        </h3>
-        <div
-          id="private-messages"
-          class="h-64 overflow-y-auto p-2 border rounded mb-4"
-        ></div>
-        <button
-          type="button"
-          id="back-to-profile-from-private"
-          class="w-full bg-gray-500 text-white p-2 rounded hover:bg-gray-600 transition mt-4"
-        >
-          Повернутися
+                <!-- Private Messages Container -->
+                <div
+                  id="private-messages-container"
+                  class="hidden animate__animated animate__fadeIn"
+                >
+                  <h3 class="text-xl font-bold mb-4 text-center">
+                    Приватні повідомлення
+                  </h3>
+                  <div
+                    id="private-messages"
+                    class="h-64 overflow-y-auto p-2 border rounded mb-4"
+                  ></div>
+                  <button
+                    type="button"
+                    id="back-to-profile-from-private"
+                    class="w-full bg-gray-500 text-white p-2 rounded hover:bg-gray-600 transition mt-4"
+                  >
+                    Повернутися
+                  </button>
+                </div>
+              </div>
+              <script src="/js/script.js"></script>
+            </body>
+          </html>
         </button>
       </div>
     </div>
-    <script src="/js/script.js"></script>
   </body>
 </html>
