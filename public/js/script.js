@@ -93,6 +93,9 @@ document.addEventListener("DOMContentLoaded", () => {
         document.getElementById("edit-employeeId").value =
           data.user.employeeId || "";
 
+        // Генерация QR-кода
+        generateQRCode(data.user.workerId, token);
+
         // Показываем профиль или форму редактирования
         if (
           !data.user.firstName &&
@@ -136,6 +139,46 @@ document.addEventListener("DOMContentLoaded", () => {
       privateMessagesContainer.classList.add("hidden");
       body.classList.remove("profile-active");
     }
+  };
+
+  // Функция для генерации QR-кода
+  const generateQRCode = (workerId, token) => {
+    const qrContainer = document.getElementById("qrcode");
+    qrContainer.innerHTML = ""; // Очищаем контейнер
+    const profileUrl = `${window.location.origin}/profile.html?workerId=${workerId}&token=${token}`;
+    QRCode.toCanvas(
+      qrContainer,
+      profileUrl,
+      { width: 192, margin: 2 },
+      (error) => {
+        if (error) {
+          console.error("Ошибка генерации QR-кода:", error);
+          alert("Не удалось сгенерировать QR-код");
+        }
+      }
+    );
+
+    // Обработчик для скачивания QR-кода
+    const downloadQrBtn = document.getElementById("download-qr");
+    downloadQrBtn.addEventListener("click", () => {
+      QRCode.toDataURL(
+        profileUrl,
+        { width: 192, margin: 2 },
+        (error, dataUrl) => {
+          if (error) {
+            console.error("Ошибка генерации DataURL для QR-кода:", error);
+            alert("Не удалось скачать QR-код");
+            return;
+          }
+          const link = document.createElement("a");
+          link.href = dataUrl;
+          link.download = `profile-qr-${workerId}.png`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+        }
+      );
+    });
   };
 
   // Инициализация WebSocket
@@ -475,6 +518,9 @@ document.addEventListener("DOMContentLoaded", () => {
         document.getElementById("edit-employeeId").value =
           data.user.employeeId || "";
 
+        // Генерация QR-кода
+        generateQRCode(data.user.workerId, data.token);
+
         if (
           !data.user.firstName &&
           !data.user.lastName &&
@@ -614,6 +660,9 @@ document.addEventListener("DOMContentLoaded", () => {
           placeholder.classList.remove("hidden");
           profilePhoto.classList.add("hidden");
         }
+
+        // Обновление QR-кода после обновления профиля
+        generateQRCode(data.user.workerId, token);
 
         profileEditContainer.classList.add("hidden");
         profileContainer.classList.remove("hidden");
