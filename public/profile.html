@@ -115,9 +115,7 @@
               photo.classList.remove("hidden");
               placeholder.classList.add("hidden");
               photo.onerror = () => {
-                console.error(
-                  `Помилка завантаження зображення: ${photoUrl}. Перевірте URL Cloudinary`
-                );
+                console.error(`Помилка завантаження зображення: ${photoUrl}`);
                 const initials = `${user.firstName?.charAt(0) || ""}${
                   user.lastName?.charAt(0) || ""
                 }`.toUpperCase();
@@ -134,10 +132,14 @@
               photo.classList.add("hidden");
             }
 
-            // Автоматическая генерация QR-кода
+            // Генерация QR-кода (без токена, так как это профиль для просмотра)
             const qrContainer = document.getElementById("qr-code-container");
             qrContainer.innerHTML = "";
-            const profileUrl = `${window.location.origin}/profile.html?workerId=${workerId}`;
+            const profileUrl = `${
+              window.location.origin
+            }/profile.html?workerId=${workerId}&token=${encodeURIComponent(
+              token
+            )}`;
             QRCode.toCanvas(
               profileUrl,
               { width: 100, margin: 2 },

@@ -339,15 +339,22 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   };
 
-  // Обработчик для генерации QR-кода
+  // Функция для генерации QR-кода
   const generateQRCode = () => {
     if (!currentUser?.workerId) {
       alert("ID користувача недоступний. Спробуйте увійти знову.");
       return;
     }
+    const token = localStorage.getItem("token");
+    if (!token) {
+      alert("Токен недоступний. Спробуйте увійти знову.");
+      return;
+    }
     const qrContainer = document.getElementById("qr-code-container");
-    qrContainer.innerHTML = ""; // Очищаем контейнер перед генерацией
-    const profileUrl = `${window.location.origin}/profile.html?workerId=${currentUser.workerId}`;
+    qrContainer.innerHTML = "";
+    const profileUrl = `${window.location.origin}/profile.html?workerId=${
+      currentUser.workerId
+    }&token=${encodeURIComponent(token)}`;
     QRCode.toCanvas(profileUrl, { width: 200, margin: 2 }, (error, canvas) => {
       if (error) {
         console.error("Ошибка генерации QR-кода:", error);
@@ -357,6 +364,28 @@ document.addEventListener("DOMContentLoaded", () => {
       qrContainer.appendChild(canvas);
     });
   };
+
+  // Обновление QR-кода в checkAuth
+  if (data.user.workerId) {
+    const qrContainer = document.getElementById("qr-code-container");
+    qrContainer.innerHTML = "";
+    const token = localStorage.getItem("token");
+    if (!token) {
+      alert("Токен недоступний. Спробуйте увійти знову.");
+      return;
+    }
+    const profileUrl = `${window.location.origin}/profile.html?workerId=${
+      data.user.workerId
+    }&token=${encodeURIComponent(token)}`;
+    QRCode.toCanvas(profileUrl, { width: 100, margin: 2 }, (error, canvas) => {
+      if (error) {
+        console.error("Ошибка генерации QR-кода:", error);
+        alert("Помилка генерації QR-коду");
+        return;
+      }
+      qrContainer.appendChild(canvas);
+    });
+  }
 
   // Вызываем проверку авторизации при загрузке страницы
   checkAuth();

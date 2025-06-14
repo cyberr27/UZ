@@ -75,7 +75,7 @@ router.post("/login", async (req, res) => {
       return res.status(400).json({ error: "Невірні облікові дані" });
     }
     const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
-      expiresIn: "1h",
+      expiresIn: "5m",
     });
     res.json({
       token,
