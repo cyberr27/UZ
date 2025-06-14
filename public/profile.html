@@ -27,11 +27,14 @@
       <h2 class="yourQRcode text-2xl font-bold mb-6 text-center myH">
         Ваш QR - код :
       </h2>
-      <div id="qr-code-container" class="ml-4"></div>
+      <div
+        id="qr-code-container"
+        class="profile-qr-code-container mt-4 ml-4"
+      ></div>
       <h2 id="my-userProfileText" class="text-2xl font-bold mb-6 text-center">
         Профіль користувача :
       </h2>
-      <div class="relative mx-auto my-ppp flex">
+      <div class="relative mx-auto my-ppp">
         <div class="relative">
           <img
             id="profile-photo"
@@ -56,12 +59,6 @@
       <p id="profile-employeeId" class="text-gray-600"></p>
       <p id="my-pwId" class="mt-2">ID працівника :</p>
       <p id="profile-workerId" class="text-gray-600"></p>
-      <button
-        id="download-qr-btn"
-        class="mt-4 bg-green-500 text-white p-2 rounded hover:bg-green-600 transition"
-      >
-        Скачать QR-код
-      </button>
       <button
         id="close-profile"
         class="mt-4 bg-gray-500 text-white p-2 rounded hover:bg-gray-600 transition"
@@ -152,21 +149,6 @@
                 qrContainer.appendChild(canvas);
               }
             );
-
-            // Обработчик для скачивания QR-кода
-            document
-              .getElementById("download-qr-btn")
-              .addEventListener("click", () => {
-                const qrCanvas = qrContainer.querySelector("canvas");
-                if (qrCanvas) {
-                  const link = document.createElement("a");
-                  link.href = qrCanvas.toDataURL("image/png");
-                  link.download = `qr-code-${workerId}.png`;
-                  link.click();
-                } else {
-                  alert("QR-код не сгенерирован");
-                }
-              });
           } else {
             alert(data.error || "Помилка завантаження профілю");
             window.close();
