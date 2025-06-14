@@ -97,7 +97,21 @@ document.addEventListener("DOMContentLoaded", () => {
         if (data.user.workerId) {
           const qrContainer = document.getElementById("qr-code-container");
           qrContainer.innerHTML = "";
-          const profileUrl = `${window.location.origin}/profile.html?workerId=${data.user.workerId}`;
+          const token = localStorage.getItem("token");
+          if (!token) {
+            alert("Токен недоступний. Спробуйте увійти знову.");
+            localStorage.removeItem("token");
+            loginFormContainer.classList.remove("hidden");
+            profileContainer.classList.add("hidden");
+            profileEditContainer.classList.add("hidden");
+            chatContainer.classList.add("hidden");
+            privateMessagesContainer.classList.add("hidden");
+            body.classList.remove("profile-active");
+            return;
+          }
+          const profileUrl = `${window.location.origin}/profile.html?workerId=${
+            data.user.workerId
+          }&token=${encodeURIComponent(token)}`;
           QRCode.toCanvas(
             profileUrl,
             { width: 100, margin: 2 },
@@ -355,28 +369,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const profileUrl = `${window.location.origin}/profile.html?workerId=${
       currentUser.workerId
     }&token=${encodeURIComponent(token)}`;
-    QRCode.toCanvas(profileUrl, { width: 200, margin: 2 }, (error, canvas) => {
-      if (error) {
-        console.error("Ошибка генерации QR-кода:", error);
-        alert("Помилка генерації QR-коду");
-        return;
-      }
-      qrContainer.appendChild(canvas);
-    });
-  };
-
-  // Обновление QR-кода в checkAuth
-  if (data.user.workerId) {
-    const qrContainer = document.getElementById("qr-code-container");
-    qrContainer.innerHTML = "";
-    const token = localStorage.getItem("token");
-    if (!token) {
-      alert("Токен недоступний. Спробуйте увійти знову.");
-      return;
-    }
-    const profileUrl = `${window.location.origin}/profile.html?workerId=${
-      data.user.workerId
-    }&token=${encodeURIComponent(token)}`;
     QRCode.toCanvas(profileUrl, { width: 100, margin: 2 }, (error, canvas) => {
       if (error) {
         console.error("Ошибка генерации QR-кода:", error);
@@ -385,7 +377,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }
       qrContainer.appendChild(canvas);
     });
-  }
+  };
 
   // Вызываем проверку авторизации при загрузке страницы
   checkAuth();
