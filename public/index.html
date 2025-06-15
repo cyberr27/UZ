@@ -261,7 +261,7 @@
           id="chat-messages"
           class="h-64 overflow-y-auto p-2 border rounded mb-4"
         ></div>
-        <div class="flex">
+        <div class="flex items-center mb-2">
           <input
             type="text"
             id="chat-input"
@@ -269,18 +269,90 @@
             placeholder="Введіть повідомлення... (для приватного: >ID текст)"
           />
           <button
+            id="toggle-emoji-panel"
+            class="bg-gray-200 text-gray-700 p-2 rounded hover:bg-gray-300 transition"
+            title="Показати/приховати смайлики"
+          >
+            😊
+          </button>
+          <button
             id="send-chat"
             class="bg-purple-500 text-white p-2 rounded-r hover:bg-purple-600 transition"
           >
             Надіслати
           </button>
+        </div>
+        <div
+          id="emoji-panel"
+          class="hidden bg-white border rounded p-2 mt-2 overflow-x-auto whitespace-nowrap max-w-full"
+        >
           <button
-            id="private-messages-btn"
-            class="mt-4 bg-indigo-500 text-white p-2 rounded hover:bg-indigo-600 transition"
+            class="emoji-btn text-2xl mx-1 animate__animated"
+            data-emoji="😊"
           >
-            Приватні повідомлення
+            😊
+          </button>
+          <button
+            class="emoji-btn text-2xl mx-1 animate__animated"
+            data-emoji="👍"
+          >
+            👍
+          </button>
+          <button
+            class="emoji-btn text-2xl mx-1 animate__animated"
+            data-emoji="❤️"
+          >
+            ❤️
+          </button>
+          <button
+            class="emoji-btn text-2xl mx-1 animate__animated"
+            data-emoji="😂"
+          >
+            😂
+          </button>
+          <button
+            class="emoji-btn text-2xl mx-1 animate__animated"
+            data-emoji="😉"
+          >
+            😉
+          </button>
+          <button
+            class="emoji-btn text-2xl mx-1 animate__animated"
+            data-emoji="😎"
+          >
+            😎
+          </button>
+          <button
+            class="emoji-btn text-2xl mx-1 animate__animated"
+            data-emoji="😢"
+          >
+            😢
+          </button>
+          <button
+            class="emoji-btn text-2xl mx-1 animate__animated"
+            data-emoji="😡"
+          >
+            😡
+          </button>
+          <button
+            class="emoji-btn text-2xl mx-1 animate__animated"
+            data-emoji="🎉"
+          >
+            🎉
+          </button>
+          <button
+            class="emoji-btn text-2xl mx-1 animate__animated"
+            data-emoji="🔥"
+          >
+            🔥
           </button>
         </div>
+        <button
+          id="private-messages-btn"
+          class="mt-4 bg-indigo-500 text-white p-2 rounded hover:bg-indigo-600 transition"
+        >
+          Приватні повідомлення
+        </button>
         <button
           type="button"
           id="back-to-profile-from-chat"

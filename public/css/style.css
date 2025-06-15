@@ -448,6 +448,49 @@ input:focus {
   color: black;
 }
 
+/* Стили для панели смайликов */
+#emoji-panel {
+  display: flex;
+  align-items: center;
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #d1d5db #f3f4f6;
+}
+
+#emoji-panel::-webkit-scrollbar {
+  height: 6px;
+}
+
+#emoji-panel::-webkit-scrollbar-thumb {
+  background-color: #d1d5db;
+  border-radius: 3px;
+}
+
+#emoji-panel::-webkit-scrollbar-track {
+  background-color: #f3f4f6;
+}
+
+.emoji-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  transition: transform 0.2s ease;
+}
+
+.emoji-btn:hover {
+  transform: scale(1.2);
+}
+
+#toggle-emoji-panel {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 @media (max-width: 640px) {
   #auth-container {
     max-width: 90%;
@@ -486,6 +529,20 @@ input:focus {
     width: 15%;
     font-size: 12px;
   }
+
+  #emoji-panel {
+    padding: 4px;
+  }
+
+  .emoji-btn {
+    font-size: 1.25rem;
+    margin: 0 2px;
+  }
+
+  #toggle-emoji-panel {
+    width: 36px;
+    height: 36px;
+  }
 }
 
 @media (max-width: 480px) {
@@ -514,5 +571,16 @@ input:focus {
   #download-qr-btn {
     width: 20%;
     font-size: 10px;
+  }
+
+  .emoji-btn {
+    font-size: 1rem;
+    margin: 0 1px;
+  }
+
+  #toggle-emoji-panel {
+    width: 32px;
+    height: 32px;
+    font-size: 1rem;
   }
 }

@@ -813,4 +813,33 @@ document.addEventListener("DOMContentLoaded", () => {
   if (downloadQrBtn) {
     downloadQrBtn.addEventListener("click", downloadQRCode);
   }
+
+  // Emoji panel logic
+  const toggleEmojiPanelBtn = document.getElementById("toggle-emoji-panel");
+  const emojiPanel = document.getElementById("emoji-panel");
+  const emojiButtons = document.querySelectorAll(".emoji-btn");
+
+  toggleEmojiPanelBtn.addEventListener("click", () => {
+    emojiPanel.classList.toggle("hidden");
+  });
+
+  emojiButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      const emoji = button.getAttribute("data-emoji");
+      chatInput.value += emoji;
+      chatInput.focus();
+      button.classList.add("animate__bounce");
+      setTimeout(() => {
+        button.classList.remove("animate__bounce");
+      }, 500);
+    });
+
+    button.addEventListener("mouseenter", () => {
+      button.classList.add("animate__pulse");
+    });
+
+    button.addEventListener("mouseleave", () => {
+      button.classList.remove("animate__pulse");
+    });
+  });
 });
