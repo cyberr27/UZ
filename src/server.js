@@ -4,6 +4,7 @@ const cors = require("cors");
 const dotenv = require("dotenv");
 const authRoutes = require("./routes/auth");
 const messageRoutes = require("./routes/messages");
+const ratingsRoutes = require("./routes/ratings");
 const path = require("path");
 const jwt = require("jsonwebtoken");
 const cloudinary = require("cloudinary").v2;
@@ -17,12 +18,10 @@ dotenv.config();
 const app = express();
 const server = http.createServer(app);
 
-// Логування змінних середовища для діагностики
 console.log("CLOUDINARY_URL:", process.env.CLOUDINARY_URL ? "Set" : "Not set");
 console.log("MONGO_URI:", process.env.MONGO_URI ? "Set" : "Not set");
 console.log("JWT_SECRET:", process.env.JWT_SECRET ? "Set" : "Not set");
 
-// Конфігурація Cloudinary
 try {
   if (!process.env.CLOUDINARY_URL) {
     throw new Error("CLOUDINARY_URL is not set in environment variables");
@@ -38,15 +37,12 @@ try {
   console.error("Cloudinary configuration error:", error.message);
 }
 
-// Middleware
 app.use(fileUpload());
 app.use(cors());
 app.use(express.json());
 
-// Обслуговування статичних файлів
 app.use(express.static(path.join(__dirname, "..", "public")));
 
-// Маршрут для головної сторінки
 app.get("/", (req, res) => {
   const indexPath = path.join(__dirname, "..", "public", "index.html");
   res.sendFile(indexPath, (err) => {
@@ -57,7 +53,6 @@ app.get("/", (req, res) => {
   });
 });
 
-// Маршрут для страницы профиля пользователя
 app.get("/profile", (req, res) => {
   const profilePath = path.join(__dirname, "..", "public", "profile.html");
   res.sendFile(profilePath, (err) => {
@@ -70,11 +65,10 @@ app.get("/profile", (req, res) => {
   });
 });
 
-// Підключаємо маршрути
 app.use("/api/auth", authRoutes);
 app.use("/api/messages", messageRoutes);
+app.use("/api/ratings", ratingsRoutes);
 
-// Маршрут для завантаження фото на Cloudinary
 app.post("/api/auth/upload-photo", async (req, res) => {
   try {
     const token = req.headers.authorization?.split(" ")[1];
@@ -134,19 +128,16 @@ app.post("/api/auth/upload-photo", async (req, res) => {
   }
 });
 
-// Глобальний обробник помилок
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({ error: "Внутрішня помилка сервера" });
 });
 
-// Підключення до MongoDB
 mongoose
   .connect(process.env.MONGO_URI)
   .then(() => console.log("Connected to MongoDB"))
   .catch((err) => console.error("MongoDB connection error:", err));
 
-// WebSocket сервер
 const wss = new WebSocketServer({ server });
 
 const clients = new Map();
@@ -205,7 +196,6 @@ wss.on("connection", (ws, req) => {
               return;
             }
 
-            // Сохраняем приватное сообщение в базе
             const privateMessage = new PrivateMessage({
               senderId: user.workerId,
               senderName: messageData.senderName,
@@ -215,7 +205,6 @@ wss.on("connection", (ws, req) => {
             });
             await privateMessage.save();
 
-            // Отправляем сообщение отправителю и получателю
             const privateData = {
               type: "private_message",
               senderId: user.workerId,
@@ -249,7 +238,6 @@ wss.on("connection", (ws, req) => {
     });
 });
 
-// Запуск сервера
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);

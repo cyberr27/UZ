@@ -1,21 +1,18 @@
 const express = require("express");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const User = require("../models/User"); // Путь относительно routes
+const User = require("../models/User");
 const router = express.Router();
 
-// Validate email format
 const isValidEmail = (email) => {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return emailRegex.test(email);
 };
 
-// Register
 router.post("/register", async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // Backend validation
     if (!email || !password) {
       return res
         .status(400)
@@ -32,7 +29,6 @@ router.post("/register", async (req, res) => {
         .json({ error: "Пароль повинен містити не менше 6 символів" });
     }
 
-    // Check for existing email
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res
@@ -48,7 +44,6 @@ router.post("/register", async (req, res) => {
       middleName: "",
       position: "",
       employeeId: "",
-      // workerId будет установлен автоматически в pre-save хуке
     });
     await user.save();
     res.status(201).json({ message: "Користувач успішно зареєстрований" });
@@ -57,7 +52,6 @@ router.post("/register", async (req, res) => {
   }
 });
 
-// Login
 router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -88,6 +82,7 @@ router.post("/login", async (req, res) => {
         employeeId: user.employeeId,
         workerId: user.workerId,
         photo: user.photo,
+        likesCount: user.likesCount,
       },
     });
   } catch (error) {
@@ -95,7 +90,6 @@ router.post("/login", async (req, res) => {
   }
 });
 
-// Update profile
 router.put("/update", async (req, res) => {
   try {
     const token = req.headers.authorization?.split(" ")[1];
@@ -116,7 +110,6 @@ router.put("/update", async (req, res) => {
         position: position || "",
         employeeId: employeeId || "",
         photo: photo || "",
-        // workerId не обновляется, остается неизменным
       },
       { new: true }
     );
@@ -135,6 +128,7 @@ router.put("/update", async (req, res) => {
         employeeId: user.employeeId,
         workerId: user.workerId,
         photo: user.photo,
+        likesCount: user.likesCount,
       },
     });
   } catch (error) {
@@ -145,7 +139,6 @@ router.put("/update", async (req, res) => {
   }
 });
 
-// Get current user data
 router.get("/me", async (req, res) => {
   try {
     const token = req.headers.authorization?.split(" ")[1];
@@ -169,6 +162,7 @@ router.get("/me", async (req, res) => {
         employeeId: user.employeeId,
         workerId: user.workerId,
         photo: user.photo,
+        likesCount: user.likesCount,
       },
     });
   } catch (error) {
@@ -179,7 +173,6 @@ router.get("/me", async (req, res) => {
   }
 });
 
-// Get user data by workerId
 router.get("/user/:workerId", async (req, res) => {
   try {
     const token = req.headers.authorization?.split(" ")[1];
@@ -187,7 +180,6 @@ router.get("/user/:workerId", async (req, res) => {
       return res.status(401).json({ error: "Токен не надано" });
     }
 
-    // Проверяем токен для аутентификации
     jwt.verify(token, process.env.JWT_SECRET);
 
     const workerId = parseInt(req.params.workerId);
@@ -206,6 +198,7 @@ router.get("/user/:workerId", async (req, res) => {
         employeeId: user.employeeId,
         workerId: user.workerId,
         photo: user.photo,
+        likesCount: user.likesCount,
       },
     });
   } catch (error) {

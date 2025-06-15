@@ -419,6 +419,35 @@ input:focus {
   color: #1d4ed8;
 }
 
+#like-btn {
+  position: absolute;
+  top: 52%;
+  left: 3%;
+  background: url(/img/Like.png) center no-repeat;
+  width: 4%;
+  height: 9%;
+}
+#dislike-btn {
+  position: absolute;
+  top: 52%;
+  left: 18.5%;
+  background: url(/img/Dislike.png) center no-repeat;
+  width: 4%;
+  height: 9%;
+}
+#likeCount {
+  position: absolute;
+  top: 53%;
+  left: 10%;
+  color: black;
+}
+#like-count {
+  position: absolute;
+  top: 12%;
+  left: 220%;
+  color: black;
+}
+
 @media (max-width: 640px) {
   #auth-container {
     max-width: 90%;

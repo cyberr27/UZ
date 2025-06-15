@@ -59,6 +59,19 @@
       <p id="profile-employeeId" class="text-gray-600"></p>
       <p id="my-pwId" class="mt-2">ID працівника :</p>
       <p id="profile-workerId" class="text-gray-600"></p>
+      <div class="mt-4 flex justify-center space-x-4">
+        <h2 id="likeCount">Like :</h2>
+        <button
+          id="like-btn"
+          class="bg-green-500 text-white p-2 rounded hover:bg-green-600 transition"
+        >
+          (<span id="like-count">0</span>)
+        </button>
+        <button
+          id="dislike-btn"
+          class="bg-red-500 text-white p-2 rounded hover:bg-red-600 transition"
+        ></button>
+      </div>
       <button
         id="close-profile"
         class="mt-4 bg-gray-500 text-white p-2 rounded hover:bg-gray-600 transition"
@@ -101,6 +114,8 @@
               user.employeeId || "Не вказано";
             document.getElementById("profile-workerId").textContent =
               user.workerId || "Не вказано";
+            document.getElementById("like-count").textContent =
+              user.likesCount || 0;
 
             const photo = document.getElementById("profile-photo");
             const placeholder = document.getElementById(
@@ -129,7 +144,6 @@
               photo.classList.add("hidden");
             }
 
-            // Генерация QR-кода (без токена, так как это профиль для просмотра)
             const qrContainer = document.getElementById("qr-code-container");
             qrContainer.innerHTML = "";
             const profileUrl = `${
@@ -149,6 +163,80 @@
                 qrContainer.appendChild(canvas);
               }
             );
+
+            // Логика лайков/дизлайков
+            const likeBtn = document.getElementById("like-btn");
+            const dislikeBtn = document.getElementById("dislike-btn");
+            const likeCount = document.getElementById("like-count");
+
+            const checkUserRating = async () => {
+              const ratingResponse = await fetch(`/api/ratings/${workerId}`, {
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                },
+              });
+              const ratingData = await ratingResponse.json();
+              if (ratingResponse.ok && ratingData.rating) {
+                if (ratingData.rating.isLike) {
+                  likeBtn.disabled = true;
+                  dislikeBtn.disabled = false;
+                } else {
+                  likeBtn.disabled = false;
+                  dislikeBtn.disabled = true;
+                }
+              } else {
+                likeBtn.disabled = false;
+                dislikeBtn.disabled = false;
+              }
+            };
+
+            await checkUserRating();
+
+            likeBtn.addEventListener("click", async () => {
+              try {
+                const response = await fetch(`/api/ratings/${workerId}`, {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                  },
+                  body: JSON.stringify({ isLike: true }),
+                });
+                const data = await response.json();
+                if (response.ok) {
+                  likeCount.textContent = data.likesCount;
+                  likeBtn.disabled = true;
+                  dislikeBtn.disabled = false;
+                } else {
+                  alert(data.error || "Помилка при оцінці");
+                }
+              } catch (error) {
+                alert("Помилка: " + error.message);
+              }
+            });
+
+            dislikeBtn.addEventListener("click", async () => {
+              try {
+                const response = await fetch(`/api/ratings/${workerId}`, {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                  },
+                  body: JSON.stringify({ isLike: false }),
+                });
+                const data = await response.json();
+                if (response.ok) {
+                  likeCount.textContent = data.likesCount;
+                  likeBtn.disabled = false;
+                  dislikeBtn.disabled = true;
+                } else {
+                  alert(data.error || "Помилка при оцінці");
+                }
+              } catch (error) {
+                alert("Помилка: " + error.message);
+              }
+            });
           } else {
             alert(data.error || "Помилка завантаження профілю");
             window.close();

@@ -2,7 +2,6 @@ document.addEventListener("DOMContentLoaded", () => {
   let ws = null;
   let currentUser = null;
 
-  // Функция для проверки авторизации и получения данных пользователя
   const checkAuth = async () => {
     const token = localStorage.getItem("token");
     const loginFormContainer = document.getElementById("login-form");
@@ -37,7 +36,6 @@ document.addEventListener("DOMContentLoaded", () => {
       const data = await response.json();
       if (response.ok) {
         currentUser = data.user;
-        // Обновляем данные профиля
         document.getElementById("profile-firstName").textContent =
           data.user.firstName || "Не вказано";
         document.getElementById("profile-lastName").textContent =
@@ -50,8 +48,9 @@ document.addEventListener("DOMContentLoaded", () => {
           data.user.employeeId || "Не вказано";
         document.getElementById("profile-workerId").textContent =
           data.user.workerId || "Не вказано";
+        document.getElementById("like-count").textContent =
+          data.user.likesCount || 0;
 
-        // Обновление фото профиля или заглушки
         const profilePhoto = document.getElementById("profile-photo");
         const placeholder = document.getElementById(
           "profile-photo-placeholder"
@@ -81,7 +80,6 @@ document.addEventListener("DOMContentLoaded", () => {
           profilePhoto.classList.add("hidden");
         }
 
-        // Заполнение формы редактирования
         document.getElementById("edit-firstName").value =
           data.user.firstName || "";
         document.getElementById("edit-lastName").value =
@@ -93,7 +91,12 @@ document.addEventListener("DOMContentLoaded", () => {
         document.getElementById("edit-employeeId").value =
           data.user.employeeId || "";
 
-        // Автоматическая генерация QR-кода
+        // Проверка текущей оценки пользователя
+        const likeBtn = document.getElementById("like-btn");
+        const dislikeBtn = document.getElementById("dislike-btn");
+        likeBtn.disabled = true;
+        dislikeBtn.disabled = true;
+
         if (data.user.workerId) {
           const qrContainer = document.getElementById("qr-code-container");
           qrContainer.innerHTML = "";
@@ -126,7 +129,6 @@ document.addEventListener("DOMContentLoaded", () => {
           );
         }
 
-        // Показываем профиль или форму редактирования
         if (
           !data.user.firstName &&
           !data.user.lastName &&
@@ -171,7 +173,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   };
 
-  // Функция для скачивания QR-кода
   const downloadQRCode = () => {
     const qrContainer = document.getElementById("qr-code-container");
     const qrCanvas = qrContainer.querySelector("canvas");
@@ -185,7 +186,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   };
 
-  // Инициализация WebSocket
   const initWebSocket = () => {
     const token = localStorage.getItem("token");
     if (!token) return;
@@ -214,7 +214,6 @@ document.addEventListener("DOMContentLoaded", () => {
     };
   };
 
-  // Функция для открытия профиля пользователя в новой вкладке
   const openUserProfileInNewTab = (workerId) => {
     try {
       const token = localStorage.getItem("token");
@@ -235,7 +234,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   };
 
-  // Отображение сообщения в чате
   const displayMessage = (data) => {
     const chatMessages = document.getElementById("chat-messages");
     const messageDiv = document.createElement("div");
@@ -275,7 +273,6 @@ document.addEventListener("DOMContentLoaded", () => {
     chatMessages.scrollTop = chatMessages.scrollHeight;
   };
 
-  // Отображение приватного сообщения
   const displayPrivateMessage = (data) => {
     const privateMessages = document.getElementById("private-messages");
     const messageDiv = document.createElement("div");
@@ -315,7 +312,6 @@ document.addEventListener("DOMContentLoaded", () => {
     privateMessages.scrollTop = privateMessages.scrollHeight;
   };
 
-  // Загрузка приватных сообщений
   const loadPrivateMessages = async () => {
     try {
       const token = localStorage.getItem("token");
@@ -353,7 +349,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   };
 
-  // Функция для генерации QR-кода
   const generateQRCode = () => {
     if (!currentUser?.workerId) {
       alert("ID користувача недоступний. Спробуйте увійти знову.");
@@ -379,10 +374,8 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   };
 
-  // Вызываем проверку авторизации при загрузке страницы
   checkAuth();
 
-  // Обработчики событий
   const loginForm = document.getElementById("login");
   const registerForm = document.getElementById("register");
   const profileEditForm = document.getElementById("profile-edit");
@@ -413,7 +406,6 @@ document.addEventListener("DOMContentLoaded", () => {
   );
   const body = document.body;
 
-  // Переключение между формами входа и регистрации
   showRegister.addEventListener("click", () => {
     loginFormContainer.classList.add("hidden");
     registerFormContainer.classList.remove("hidden");
@@ -432,13 +424,11 @@ document.addEventListener("DOMContentLoaded", () => {
     body.classList.remove("profile-active");
   });
 
-  // Валидация email
   const isValidEmail = (email) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
   };
 
-  // Обработка регистрации
   registerForm.addEventListener("submit", async (e) => {
     e.preventDefault();
     const email = document.getElementById("register-email").value;
@@ -476,7 +466,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // Обработка входа
   loginForm.addEventListener("submit", async (e) => {
     e.preventDefault();
     const email = document.getElementById("login-email").value;
@@ -509,6 +498,8 @@ document.addEventListener("DOMContentLoaded", () => {
           data.user.employeeId || "Не вказано";
         document.getElementById("profile-workerId").textContent =
           data.user.workerId || "Не вказано";
+        document.getElementById("like-count").textContent =
+          data.user.likesCount || 0;
 
         const profilePhoto = document.getElementById("profile-photo");
         const placeholder = document.getElementById(
@@ -580,7 +571,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // Обработка обновления профиля
   profileEditForm.addEventListener("submit", async (e) => {
     e.preventDefault();
     const firstName = document.getElementById("edit-firstName").value;
@@ -660,6 +650,8 @@ document.addEventListener("DOMContentLoaded", () => {
           data.user.employeeId || "Не вказано";
         document.getElementById("profile-workerId").textContent =
           data.user.workerId || "Не вказано";
+        document.getElementById("like-count").textContent =
+          data.user.likesCount || 0;
 
         const profilePhoto = document.getElementById("profile-photo");
         const placeholder = document.getElementById(
@@ -704,7 +696,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // Показ формы редактирования профиля
   editProfileBtn.addEventListener("click", () => {
     profileContainer.classList.add("hidden");
     profileEditContainer.classList.remove("hidden");
@@ -713,7 +704,6 @@ document.addEventListener("DOMContentLoaded", () => {
     body.classList.add("profile-active");
   });
 
-  // Показ чата
   chatBtn.addEventListener("click", () => {
     profileContainer.classList.add("hidden");
     chatContainer.classList.remove("hidden");
@@ -725,7 +715,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // Показ приватных сообщений
   privateMessagesBtn.addEventListener("click", () => {
     profileContainer.classList.add("hidden");
     chatContainer.classList.add("hidden");
@@ -738,7 +727,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // Возврат из чата в профиль
   backToProfileFromChat.addEventListener("click", () => {
     chatContainer.classList.add("hidden");
     profileContainer.classList.remove("hidden");
@@ -747,7 +735,6 @@ document.addEventListener("DOMContentLoaded", () => {
     body.classList.add("profile-active");
   });
 
-  // Возврат из приватных сообщений в чат
   backToProfileFromPrivate.addEventListener("click", () => {
     privateMessagesContainer.classList.add("hidden");
     chatContainer.classList.remove("hidden");
@@ -759,11 +746,9 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // Отправка сообщения
   sendChatBtn.addEventListener("click", () => {
     const message = chatInput.value.trim();
     if (message && ws && ws.readyState === WebSocket.OPEN) {
-      // Проверяем, является ли сообщение приватным (начинается с ">ID")
       const privateMessageMatch = message.match(/^>(\d+)\s+(.+)/);
       if (privateMessageMatch) {
         const recipientId = parseInt(privateMessageMatch[1]);
@@ -797,14 +782,12 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // Отправка сообщения по Enter
   chatInput.addEventListener("keypress", (e) => {
     if (e.key === "Enter") {
       sendChatBtn.click();
     }
   });
 
-  // Обработка выхода
   logoutButton.addEventListener("click", () => {
     if (ws) {
       ws.close();
@@ -818,7 +801,6 @@ document.addEventListener("DOMContentLoaded", () => {
     body.classList.remove("profile-active");
   });
 
-  // Обработка кнопки "Повернутися" из формы редактирования
   const backToProfileBtn = document.getElementById("back-to-profile");
   backToProfileBtn.addEventListener("click", () => {
     profileEditContainer.classList.add("hidden");

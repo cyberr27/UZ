@@ -13,7 +13,6 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="/css/style.css" />
-    <!-- Добавляем библиотеку qrcode.js -->
     <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.0/build/qrcode.min.js"></script>
   </head>
   <body class="bodyBox">
@@ -213,6 +212,21 @@
           <p id="profile-employeeId" class="text-gray-600"></p>
           <p class="my-wid">ID працівника :</p>
           <p id="profile-workerId" class="text-gray-600"></p>
+          <div class="mt-4 flex justify-center space-x-4">
+            <h2 id="likeCount">Like :</h2>
+            <button
+              id="like-btn"
+              class="bg-green-500 text-white p-2 rounded hover:bg-green-600 transition"
+              disabled
+            >
+              (<span id="like-count">0</span>)
+            </button>
+            <button
+              id="dislike-btn"
+              class="bg-red-500 text-white p-2 rounded hover:bg-red-600 transition"
+              disabled
+            ></button>
+          </div>
           <button
             id="edit-profile-btn"
             class="mt-4 bg-blue-500 text-white p-2 rounded hover:bg-blue-600 transition"

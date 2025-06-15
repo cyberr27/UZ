@@ -9,16 +9,21 @@ const userSchema = new mongoose.Schema({
   middleName: { type: String, default: "" },
   position: { type: String, default: "" },
   employeeId: { type: String, default: "" },
-  workerId: { type: Number, unique: true }, // Новое поле для ID працівника
+  workerId: { type: Number, unique: true },
   photo: { type: String, default: "" },
+  likesCount: { type: Number, default: 0 },
+  ratings: [
+    {
+      userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+      isLike: { type: Boolean },
+    },
+  ],
 });
 
-// Hash password before saving
 userSchema.pre("save", async function (next) {
   if (this.isModified("password")) {
     this.password = await bcrypt.hash(this.password, 10);
   }
-  // Автоматическое присвоение workerId, если он не задан
   if (this.isNew && !this.workerId) {
     try {
       const lastUser = await mongoose
