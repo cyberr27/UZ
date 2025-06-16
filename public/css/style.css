@@ -202,8 +202,8 @@ button:hover {
 
 #private-messages-btn {
   position: absolute;
-  left: 5%;
-  top: 77%;
+  left: 4.6%;
+  top: 78%;
   width: 15%;
   height: 10%;
   font-size: 18px;
@@ -450,9 +450,12 @@ input:focus {
 
 /* Стили для панели смайликов */
 #emoji-panel {
+  position: absolute;
+  top: 78.3%;
+  left: 60.2%;
+  height: 15%;
   display: flex;
   align-items: center;
-  max-width: 100%;
   overflow-x: auto;
   scrollbar-width: thin;
   scrollbar-color: #d1d5db #f3f4f6;
@@ -481,14 +484,6 @@ input:focus {
 
 .emoji-btn:hover {
   transform: scale(1.2);
-}
-
-#toggle-emoji-panel {
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
 @media (max-width: 640px) {
@@ -530,18 +525,9 @@ input:focus {
     font-size: 12px;
   }
 
-  #emoji-panel {
-    padding: 4px;
-  }
-
   .emoji-btn {
     font-size: 1.25rem;
     margin: 0 2px;
-  }
-
-  #toggle-emoji-panel {
-    width: 36px;
-    height: 36px;
   }
 }
 
@@ -576,11 +562,5 @@ input:focus {
   .emoji-btn {
     font-size: 1rem;
     margin: 0 1px;
-  }
-
-  #toggle-emoji-panel {
-    width: 32px;
-    height: 32px;
-    font-size: 1rem;
   }
 }

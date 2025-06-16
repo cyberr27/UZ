@@ -815,13 +815,8 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // Emoji panel logic
-  const toggleEmojiPanelBtn = document.getElementById("toggle-emoji-panel");
   const emojiPanel = document.getElementById("emoji-panel");
   const emojiButtons = document.querySelectorAll(".emoji-btn");
-
-  toggleEmojiPanelBtn.addEventListener("click", () => {
-    emojiPanel.classList.toggle("hidden");
-  });
 
   emojiButtons.forEach((button) => {
     button.addEventListener("click", () => {
