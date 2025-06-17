@@ -2,6 +2,39 @@ document.addEventListener("DOMContentLoaded", () => {
   let ws = null;
   let currentUser = null;
 
+  // Функция генерации QR-кода
+  const generateQRCode = () => {
+    if (!currentUser?.workerId) {
+      console.error("ID пользователя недоступен");
+      alert("ID користувача недоступний. Спробуйте увійти знову.");
+      return;
+    }
+    const token = localStorage.getItem("token");
+    if (!token) {
+      console.error("Токен недоступен");
+      alert("Токен недоступний. Спробуйте увійти знову.");
+      return;
+    }
+    const qrContainer = document.getElementById("qr-code-container");
+    if (!qrContainer) {
+      console.error("Контейнер для QR-кода не найден");
+      alert("Помилка: контейнер для QR-коду не знайдено");
+      return;
+    }
+    qrContainer.innerHTML = ""; // Очищаем контейнер перед генерацией
+    const profileUrl = `${window.location.origin}/profile.html?workerId=${
+      currentUser.workerId
+    }&token=${encodeURIComponent(token)}`;
+    QRCode.toCanvas(profileUrl, { width: 100, margin: 2 }, (error, canvas) => {
+      if (error) {
+        console.error("Ошибка генерации QR-кода:", error);
+        alert("Помилка генерації QR-коду");
+        return;
+      }
+      qrContainer.appendChild(canvas);
+    });
+  };
+
   const checkAuth = async () => {
     const token = localStorage.getItem("token");
     const loginFormContainer = document.getElementById("login-form");
@@ -61,9 +94,7 @@ document.addEventListener("DOMContentLoaded", () => {
           profilePhoto.classList.remove("hidden");
           placeholder.classList.add("hidden");
           profilePhoto.onerror = () => {
-            console.error(
-              `Помилка завантаження зображення: ${photoUrl}. Перевірте URL Cloudinary`
-            );
+            console.error(`Помилка завантаження зображення: ${photoUrl}`);
             const initials = `${data.user.firstName?.charAt(0) || ""}${
               data.user.lastName?.charAt(0) || ""
             }`.toUpperCase();
@@ -97,38 +128,7 @@ document.addEventListener("DOMContentLoaded", () => {
         likeBtn.disabled = true;
         dislikeBtn.disabled = true;
 
-        if (data.user.workerId) {
-          const qrContainer = document.getElementById("qr-code-container");
-          qrContainer.innerHTML = "";
-          const token = localStorage.getItem("token");
-          if (!token) {
-            alert("Токен недоступний. Спробуйте увійти знову.");
-            localStorage.removeItem("token");
-            loginFormContainer.classList.remove("hidden");
-            profileContainer.classList.add("hidden");
-            profileEditContainer.classList.add("hidden");
-            chatContainer.classList.add("hidden");
-            privateMessagesContainer.classList.add("hidden");
-            body.classList.remove("profile-active");
-            return;
-          }
-          const profileUrl = `${window.location.origin}/profile.html?workerId=${
-            data.user.workerId
-          }&token=${encodeURIComponent(token)}`;
-          QRCode.toCanvas(
-            profileUrl,
-            { width: 100, margin: 2 },
-            (error, canvas) => {
-              if (error) {
-                console.error("Ошибка генерации QR-кода:", error);
-                alert("Помилка генерації QR-коду");
-                return;
-              }
-              qrContainer.appendChild(canvas);
-            }
-          );
-        }
-
+        // Показываем профиль или форму редактирования в зависимости от данных
         if (
           !data.user.firstName &&
           !data.user.lastName &&
@@ -149,6 +149,8 @@ document.addEventListener("DOMContentLoaded", () => {
           privateMessagesContainer.classList.add("hidden");
           profileEditContainer.classList.add("hidden");
           body.classList.add("profile-active");
+          // Генерируем QR-код после отображения профиля
+          setTimeout(generateQRCode, 0); // Вызываем в следующем цикле событий
         }
       } else {
         alert(data.error || "Помилка авторизації");
@@ -182,7 +184,9 @@ document.addEventListener("DOMContentLoaded", () => {
       link.download = `qr-code-${currentUser?.workerId || "profile"}.png`;
       link.click();
     } else {
+      console.error("QR-код не сгенерирован");
       alert("QR-код не сгенерирован");
+      generateQRCode(); // Попытка повторной генерации
     }
   };
 
@@ -349,31 +353,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   };
 
-  const generateQRCode = () => {
-    if (!currentUser?.workerId) {
-      alert("ID користувача недоступний. Спробуйте увійти знову.");
-      return;
-    }
-    const token = localStorage.getItem("token");
-    if (!token) {
-      alert("Токен недоступний. Спробуйте увійти знову.");
-      return;
-    }
-    const qrContainer = document.getElementById("qr-code-container");
-    qrContainer.innerHTML = "";
-    const profileUrl = `${window.location.origin}/profile.html?workerId=${
-      currentUser.workerId
-    }&token=${encodeURIComponent(token)}`;
-    QRCode.toCanvas(profileUrl, { width: 100, margin: 2 }, (error, canvas) => {
-      if (error) {
-        console.error("Ошибка генерации QR-кода:", error);
-        alert("Помилка генерації QR-коду");
-        return;
-      }
-      qrContainer.appendChild(canvas);
-    });
-  };
-
   checkAuth();
 
   const loginForm = document.getElementById("login");
@@ -511,9 +490,7 @@ document.addEventListener("DOMContentLoaded", () => {
           profilePhoto.classList.remove("hidden");
           placeholder.classList.add("hidden");
           profilePhoto.onerror = () => {
-            console.error(
-              `Помилка завантаження зображення: ${photoUrl}. Перевірте, чи файл існує в /public/uploads/`
-            );
+            console.error(`Помилка завантаження зображення: ${photoUrl}`);
             const initials = `${data.user.firstName?.charAt(0) || ""}${
               data.user.lastName?.charAt(0) || ""
             }`.toUpperCase();
@@ -561,6 +538,7 @@ document.addEventListener("DOMContentLoaded", () => {
           privateMessagesContainer.classList.add("hidden");
           profileEditContainer.classList.add("hidden");
           body.classList.add("profile-active");
+          setTimeout(generateQRCode, 0); // Генерируем QR-код после отображения профиля
         }
         initWebSocket();
       } else {
@@ -663,9 +641,7 @@ document.addEventListener("DOMContentLoaded", () => {
           profilePhoto.classList.remove("hidden");
           placeholder.classList.add("hidden");
           profilePhoto.onerror = () => {
-            console.error(
-              `Помилка завантаження зображення: ${photoUrl}. Перевірте URL Cloudinary`
-            );
+            console.error(`Помилка завантаження зображення: ${photoUrl}`);
             const initials = `${data.user.firstName?.charAt(0) || ""}${
               data.user.lastName?.charAt(0) || ""
             }`.toUpperCase();
@@ -687,6 +663,7 @@ document.addEventListener("DOMContentLoaded", () => {
         chatContainer.classList.add("hidden");
         privateMessagesContainer.classList.add("hidden");
         body.classList.add("profile-active");
+        setTimeout(generateQRCode, 0); // Генерируем QR-код после обновления профиля
       } else {
         alert(data.error || "Помилка оновлення профілю");
       }
@@ -733,6 +710,7 @@ document.addEventListener("DOMContentLoaded", () => {
     profileEditContainer.classList.add("hidden");
     privateMessagesContainer.classList.add("hidden");
     body.classList.add("profile-active");
+    setTimeout(generateQRCode, 0); // Генерируем QR-код при возврате к профилю
   });
 
   backToProfileFromPrivate.addEventListener("click", () => {
@@ -808,6 +786,7 @@ document.addEventListener("DOMContentLoaded", () => {
     chatContainer.classList.add("hidden");
     privateMessagesContainer.classList.add("hidden");
     body.classList.add("profile-active");
+    setTimeout(generateQRCode, 0); // Генерируем QR-код при возврате к профилю
   });
 
   if (downloadQrBtn) {
