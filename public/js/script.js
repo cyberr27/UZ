@@ -420,7 +420,13 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("topic-chat-title").textContent = title;
     document.getElementById("chat-container").classList.add("hidden");
     document.getElementById("topic-chat-container").classList.remove("hidden");
-    document.getElementById("create-topic-modal").classList.add("hidden");
+    document.getElementById("create-topic-container").classList.add("hidden"); // Обновлено
+    document.getElementById("profile-container").classList.add("hidden");
+    document.getElementById("profile-edit-container").classList.add("hidden");
+    document
+      .getElementById("private-messages-container")
+      .classList.add("hidden");
+    document.body.classList.add("profile-active");
     loadTopicMessages(topicId);
   };
 
@@ -532,15 +538,20 @@ document.addEventListener("DOMContentLoaded", () => {
     "back-to-profile-from-private"
   );
   const createTopicBtn = document.getElementById("create-topic-btn");
-  const createTopicModal = document.getElementById("create-topic-modal");
-  const closeTopicModal = document.getElementById("close-topic-modal");
+  const createTopicContainer = document.getElementById(
+    "create-topic-container"
+  ); // Заменили createTopicModal
   const submitTopic = document.getElementById("submit-topic");
   const topicTitleInput = document.getElementById("topic-title");
+  const backToChatFromCreateTopic = document.getElementById(
+    "back-to-chat-from-create-topic"
+  ); // Новая кнопка
   const sendTopicChatBtn = document.getElementById("send-topic-chat");
   const topicChatInput = document.getElementById("topic-chat-input");
   const backToChatFromTopic = document.getElementById(
     "back-to-chat-from-topic"
   );
+  const topicChatContainer = document.getElementById("topic-chat-container"); // Добавили для ясности
   const body = document.body;
 
   showRegister.addEventListener("click", () => {
@@ -976,13 +987,28 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   createTopicBtn.addEventListener("click", () => {
-    createTopicModal.classList.remove("hidden");
+    chatContainer.classList.add("hidden");
+    createTopicContainer.classList.remove("hidden");
+    profileContainer.classList.add("hidden");
+    profileEditContainer.classList.add("hidden");
+    privateMessagesContainer.classList.add("hidden");
+    topicChatContainer.classList.add("hidden");
+    body.classList.add("profile-active");
     topicTitleInput.value = "";
     loadTopics();
   });
 
-  closeTopicModal.addEventListener("click", () => {
-    createTopicModal.classList.add("hidden");
+  backToChatFromCreateTopic.addEventListener("click", () => {
+    createTopicContainer.classList.add("hidden");
+    chatContainer.classList.remove("hidden");
+    profileContainer.classList.add("hidden");
+    profileEditContainer.classList.add("hidden");
+    privateMessagesContainer.classList.add("hidden");
+    topicChatContainer.classList.add("hidden");
+    body.classList.add("profile-active");
+    if (!ws || ws.readyState !== WebSocket.OPEN) {
+      initWebSocket();
+    }
   });
 
   submitTopic.addEventListener("click", async () => {
@@ -1010,7 +1036,16 @@ document.addEventListener("DOMContentLoaded", () => {
       const data = await response.json();
       if (response.ok) {
         alert("Тема создана!");
-        createTopicModal.classList.add("hidden");
+        createTopicContainer.classList.add("hidden"); // Обновлено
+        chatContainer.classList.remove("hidden"); // Возврат в чат
+        profileContainer.classList.add("hidden");
+        profileEditContainer.classList.add("hidden");
+        privateMessagesContainer.classList.add("hidden");
+        topicChatContainer.classList.add("hidden");
+        body.classList.add("profile-active");
+        if (!ws || ws.readyState !== WebSocket.OPEN) {
+          initWebSocket();
+        }
         loadTopics();
       } else {
         alert(data.error || "Ошибка создания темы");

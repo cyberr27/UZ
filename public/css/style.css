@@ -486,11 +486,6 @@ input:focus {
   transform: scale(1.2);
 }
 
-/* Modal */
-#create-topic-modal {
-  z-index: 50;
-}
-
 #topics-list {
   background: #fff;
   border-color: #e5e7eb;
@@ -538,6 +533,32 @@ input:focus {
   border-radius: 12px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
   backdrop-filter: none;
+}
+
+/* Create Topic Container */
+#create-topic-container {
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.95);
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  backdrop-filter: none;
+  transition: all 0.3s ease-in-out;
+}
+
+#topics-list {
+  background: #fff;
+  border-color: #e5e7eb;
+  height: 62%;
+}
+
+#submit-topic {
+  width: 15%;
+}
+
+#back-to-chat-from-create-topic {
+  width: 20%;
 }
 
 #topic-messages {
@@ -626,6 +647,17 @@ input:focus {
     font-size: 1.25rem;
     margin: 0 2px;
   }
+
+  #create-topic-container {
+    max-width: 95%;
+    padding: 1.5rem;
+  }
+
+  #submit-topic,
+  #back-to-chat-from-create-topic {
+    width: 25%;
+    font-size: 12px;
+  }
 }
 
 @media (max-width: 480px) {
@@ -659,5 +691,15 @@ input:focus {
   .emoji-btn {
     font-size: 1rem;
     margin: 0 1px;
+  }
+
+  #create-topic-container {
+    padding: 1rem;
+  }
+
+  #submit-topic,
+  #back-to-chat-from-create-topic {
+    width: 30%;
+    font-size: 10px;
   }
 }

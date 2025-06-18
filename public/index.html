@@ -398,41 +398,40 @@
         </div>
       </div>
 
-      <!-- Topic Chat Container -->
+      <!-- Create Topic Container -->
       <div
-        id="topic-chat-container"
+        id="create-topic-container"
         class="hidden animate__animated animate__fadeIn"
       >
-        <h3
-          id="topic-chat-title"
-          class="text-xl font-bold mb-4 text-center"
-        ></h3>
-        <div
-          id="topic-messages"
-          class="h-64 overflow-y-auto p-2 border rounded mb-4"
-        ></div>
-        <div class="flex items-center mb-2">
-          <input
-            type="text"
-            id="topic-chat-input"
-            class="w-full p-2 border rounded-l focus:outline-none focus:ring-2 focus:ring-purple-500"
-            placeholder="Введіть повідомлення..."
-          />
+        <h3 class="text-xl font-bold mb-4 text-center">Створити нову тему</h3>
+        <input
+          type="text"
+          id="topic-title"
+          class="w-full p-2 border rounded mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder="Введіть назву теми..."
+        />
+        <div class="flex justify-end mb-4">
           <button
-            id="send-topic-chat"
-            class="bg-purple-500 text-white p-2 rounded-r hover:bg-purple-600 transition"
+            id="submit-topic"
+            class="bg-blue-500 text-white p-2 rounded hover:bg-blue-600 transition mr-2"
           >
-            Надіслати
+            Створити
+          </button>
+          <button
+            id="back-to-chat-from-create-topic"
+            class="bg-gray-500 text-white p-2 rounded hover:bg-gray-600 transition"
+          >
+            Повернутися до чату
           </button>
         </div>
-        <button
-          type="button"
-          id="back-to-chat-from-topic"
-          class="w-full bg-gray-500 text-white p-2 rounded hover:bg-gray-600 transition mt-4"
+        <div
+          id="topics-list"
+          class="max-h-64 overflow-y-auto p-2 border rounded"
         >
-          Повернутися до загального чату
-        </button>
+          <!-- Список тем будет добавлен динамически -->
+        </div>
       </div>
+
       <!-- Private Messages Container -->
       <div
         id="private-messages-container"
