@@ -551,6 +551,46 @@ document.addEventListener("DOMContentLoaded", () => {
   const backToChatFromTopic = document.getElementById(
     "back-to-chat-from-topic"
   );
+  if (sendTopicChatBtn) {
+    sendTopicChatBtn.addEventListener("click", () => {
+      const message = topicChatInput?.value.trim();
+      if (message && ws && ws.readyState === WebSocket.OPEN && currentTopicId) {
+        const data = {
+          type: "topic_message",
+          topicId: currentTopicId,
+          message: message,
+          senderId: currentUser.workerId,
+          senderName:
+            `${currentUser.firstName || ""} ${
+              currentUser.lastName || ""
+            }`.trim() || "Анонім",
+          timestamp: new Date().toISOString(),
+        };
+        ws.send(JSON.stringify(data));
+        topicChatInput.value = "";
+      }
+    });
+  }
+
+  if (topicChatInput) {
+    topicChatInput.addEventListener("keypress", (e) => {
+      if (e.key === "Enter") {
+        sendTopicChatBtn?.click();
+      }
+    });
+  }
+
+  if (backToChatFromTopic) {
+    backToChatFromTopic.addEventListener("click", () => {
+      topicChatContainer.classList.add("hidden");
+      chatContainer.classList.remove("hidden");
+      profileContainer.classList.add("hidden");
+      profileEditContainer.classList.add("hidden");
+      privateMessagesContainer.classList.add("hidden");
+      body.classList.add("profile-active");
+      currentTopicId = null;
+    });
+  }
   const topicChatContainer = document.getElementById("topic-chat-container"); // Добавили для ясности
   const body = document.body;
 
