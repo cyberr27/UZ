@@ -1,6 +1,7 @@
 document.addEventListener("DOMContentLoaded", () => {
   let ws = null;
   let currentUser = null;
+  let currentTopicId = null;
 
   // Функция генерации QR-кода
   const generateQRCode = () => {
@@ -206,6 +207,11 @@ document.addEventListener("DOMContentLoaded", () => {
         displayMessage(data);
       } else if (data.type === "private_message") {
         displayPrivateMessage(data);
+      } else if (
+        data.type === "topic_message" &&
+        data.topicId === currentTopicId
+      ) {
+        displayTopicMessage(data);
       }
     };
 
@@ -353,6 +359,148 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   };
 
+  const loadTopics = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        alert("Токен отсутствует. Пожалуйста, войдите снова.");
+        return;
+      }
+
+      const response = await fetch("/api/topics?page=1&limit=10", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const data = await response.json();
+      if (response.ok) {
+        const topicsList = document.getElementById("topics-list");
+        topicsList.innerHTML = "";
+        data.topics.forEach((topic) => {
+          const topicDiv = document.createElement("div");
+          topicDiv.classList.add("topic-item");
+          if (topic.isClosed) topicDiv.classList.add("closed");
+
+          const titleSpan = document.createElement("div");
+          titleSpan.classList.add("title");
+          titleSpan.textContent = topic.title;
+          topicDiv.appendChild(titleSpan);
+
+          const creatorSpan = document.createElement("div");
+          creatorSpan.classList.add("creator");
+          creatorSpan.textContent = `Создал: ${topic.creatorName}`;
+          topicDiv.appendChild(creatorSpan);
+
+          const usersSpan = document.createElement("div");
+          usersSpan.classList.add("users");
+          usersSpan.textContent = `Участников: ${topic.uniqueUsersCount}`;
+          topicDiv.appendChild(usersSpan);
+
+          if (!topic.isClosed) {
+            topicDiv.addEventListener("click", () => {
+              openTopicChat(topic._id, topic.title);
+            });
+          }
+
+          topicsList.appendChild(topicDiv);
+        });
+      } else {
+        alert(data.error || "Ошибка загрузки тем");
+      }
+    } catch (error) {
+      console.error("Ошибка загрузки тем:", error);
+      alert("Ошибка загрузки тем: " + error.message);
+    }
+  };
+
+  const openTopicChat = async (topicId, title) => {
+    currentTopicId = topicId;
+    document.getElementById("topic-chat-title").textContent = title;
+    document.getElementById("chat-container").classList.add("hidden");
+    document.getElementById("topic-chat-container").classList.remove("hidden");
+    document.getElementById("create-topic-modal").classList.add("hidden");
+    loadTopicMessages(topicId);
+  };
+
+  const loadTopicMessages = async (topicId) => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        alert("Токен отсутствует. Пожалуйста, войдите снова.");
+        return;
+      }
+
+      const response = await fetch(`/api/topics/${topicId}/messages`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const data = await response.json();
+      if (response.ok) {
+        const topicMessages = document.getElementById("topic-messages");
+        topicMessages.innerHTML = "";
+        data.messages.forEach((msg) => {
+          displayTopicMessage({
+            type: "topic_message",
+            topicId: msg.topicId,
+            senderId: msg.senderId,
+            senderName: msg.senderName,
+            message: msg.message,
+            timestamp: msg.timestamp,
+          });
+        });
+      } else {
+        alert(data.error || "Ошибка загрузки сообщений темы");
+      }
+    } catch (error) {
+      console.error("Ошибка загрузки сообщений темы:", error);
+      alert("Ошибка загрузки сообщений темы: " + error.message);
+    }
+  };
+
+  const displayTopicMessage = (data) => {
+    const topicMessages = document.getElementById("topic-messages");
+    const messageDiv = document.createElement("div");
+    messageDiv.classList.add("topic-message");
+    const isSent = data.senderId === currentUser?.workerId;
+    messageDiv.classList.add(isSent ? "sent" : "received");
+
+    const senderNameSpan = document.createElement("span");
+    senderNameSpan.classList.add("chat-username");
+    senderNameSpan.textContent = data.senderName || "Аноним";
+    senderNameSpan.style.cursor = "pointer";
+    senderNameSpan.title = "Нажмите, чтобы просмотреть профиль";
+
+    senderNameSpan.addEventListener("click", () => {
+      openUserProfileInNewTab(data.senderId);
+    });
+
+    messageDiv.appendChild(senderNameSpan);
+    const messageText = document.createElement("span");
+    messageText.textContent = `: ${data.message}`;
+    messageDiv.appendChild(messageText);
+
+    const timestamp = document.createElement("div");
+    timestamp.style.fontSize = "0.75rem";
+    timestamp.style.color = "#6b7280";
+    timestamp.style.marginTop = "2px";
+    timestamp.textContent = new Date(data.timestamp).toLocaleString("uk-UA", {
+      hour: "2-digit",
+      minute: "2-digit",
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    });
+    messageDiv.appendChild(timestamp);
+
+    topicMessages.appendChild(messageDiv);
+    topicMessages.scrollTop = topicMessages.scrollHeight;
+  };
+
   checkAuth();
 
   const loginForm = document.getElementById("login");
@@ -382,6 +530,16 @@ document.addEventListener("DOMContentLoaded", () => {
   );
   const backToProfileFromPrivate = document.getElementById(
     "back-to-profile-from-private"
+  );
+  const createTopicBtn = document.getElementById("create-topic-btn");
+  const createTopicModal = document.getElementById("create-topic-modal");
+  const closeTopicModal = document.getElementById("close-topic-modal");
+  const submitTopic = document.getElementById("submit-topic");
+  const topicTitleInput = document.getElementById("topic-title");
+  const sendTopicChatBtn = document.getElementById("send-topic-chat");
+  const topicChatInput = document.getElementById("topic-chat-input");
+  const backToChatFromTopic = document.getElementById(
+    "back-to-chat-from-topic"
   );
   const body = document.body;
 
@@ -815,5 +973,86 @@ document.addEventListener("DOMContentLoaded", () => {
     button.addEventListener("mouseleave", () => {
       button.classList.remove("animate__pulse");
     });
+  });
+
+  createTopicBtn.addEventListener("click", () => {
+    createTopicModal.classList.remove("hidden");
+    topicTitleInput.value = "";
+    loadTopics();
+  });
+
+  closeTopicModal.addEventListener("click", () => {
+    createTopicModal.classList.add("hidden");
+  });
+
+  submitTopic.addEventListener("click", async () => {
+    const title = topicTitleInput.value.trim();
+    if (!title || title.length < 3) {
+      alert("Название темы должно содержать минимум 3 символа");
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        alert("Токен отсутствует. Пожалуйста, войдите снова.");
+        return;
+      }
+
+      const response = await fetch("/api/topics", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ title }),
+      });
+      const data = await response.json();
+      if (response.ok) {
+        alert("Тема создана!");
+        createTopicModal.classList.add("hidden");
+        loadTopics();
+      } else {
+        alert(data.error || "Ошибка создания темы");
+      }
+    } catch (error) {
+      console.error("Ошибка создания темы:", error);
+      alert("Ошибка создания темы: " + error.message);
+    }
+  });
+
+  sendTopicChatBtn.addEventListener("click", () => {
+    const message = topicChatInput.value.trim();
+    if (message && ws && ws.readyState === WebSocket.OPEN && currentTopicId) {
+      const data = {
+        type: "topic_message",
+        topicId: currentTopicId,
+        message: message,
+        senderId: currentUser.workerId,
+        senderName:
+          `${currentUser.firstName || ""} ${
+            currentUser.lastName || ""
+          }`.trim() || "Аноним",
+        timestamp: new Date().toISOString(),
+      };
+      ws.send(JSON.stringify(data));
+      topicChatInput.value = "";
+    }
+  });
+
+  topicChatInput.addEventListener("keypress", (e) => {
+    if (e.key === "Enter") {
+      sendTopicChatBtn.click();
+    }
+  });
+
+  backToChatFromTopic.addEventListener("click", () => {
+    topicChatContainer.classList.add("hidden");
+    chatContainer.classList.remove("hidden");
+    profileContainer.classList.add("hidden");
+    profileEditContainer.classList.add("hidden");
+    privateMessagesContainer.classList.add("hidden");
+    body.classList.add("profile-active");
+    currentTopicId = null;
   });
 });

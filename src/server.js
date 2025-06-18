@@ -13,6 +13,9 @@ const { WebSocketServer } = require("ws");
 const http = require("http");
 const User = require("./models/User");
 const PrivateMessage = require("./models/PrivateMessage");
+const topicRoutes = require("./routes/topics");
+const Topic = require("./models/Topic");
+const TopicMessage = require("./models/TopicMessage");
 
 dotenv.config();
 const app = express();
@@ -68,6 +71,7 @@ app.get("/profile", (req, res) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/messages", messageRoutes);
 app.use("/api/ratings", ratingsRoutes);
+app.use("/api/topics", topicRoutes);
 
 app.post("/api/auth/upload-photo", async (req, res) => {
   try {
@@ -170,6 +174,7 @@ wss.on("connection", (ws, req) => {
         try {
           const messageData = JSON.parse(data);
           if (messageData.type === "message") {
+            // Существующая логика для общих сообщений
             const broadcastData = {
               type: "message",
               senderId: user.workerId,
@@ -183,6 +188,7 @@ wss.on("connection", (ws, req) => {
               }
             });
           } else if (messageData.type === "private_message") {
+            // Существующая логика для приватных сообщений
             const recipient = await User.findOne({
               workerId: messageData.recipientId,
             });
@@ -221,6 +227,58 @@ wss.on("connection", (ws, req) => {
             if (ws.readyState === ws.OPEN) {
               ws.send(JSON.stringify(privateData));
             }
+          } else if (messageData.type === "topic_message") {
+            // Новая логика для сообщений в темах
+            const topic = await Topic.findById(messageData.topicId);
+            if (!topic) {
+              ws.send(
+                JSON.stringify({
+                  type: "error",
+                  message: "Тема не найдена",
+                })
+              );
+              return;
+            }
+            if (topic.isClosed) {
+              ws.send(
+                JSON.stringify({
+                  type: "error",
+                  message: "Тема закрыта",
+                })
+              );
+              return;
+            }
+
+            const topicMessage = new TopicMessage({
+              topicId: messageData.topicId,
+              senderId: user.workerId,
+              senderName: messageData.senderName,
+              message: messageData.message,
+              timestamp: messageData.timestamp,
+            });
+            await topicMessage.save();
+
+            // Обновляем uniqueUsersCount
+            const uniqueUsers = await TopicMessage.distinct("senderId", {
+              topicId: messageData.topicId,
+            });
+            topic.uniqueUsersCount = uniqueUsers.length;
+            await topic.save();
+
+            const topicData = {
+              type: "topic_message",
+              topicId: messageData.topicId,
+              senderId: user.workerId,
+              senderName: messageData.senderName,
+              message: messageData.message,
+              timestamp: messageData.timestamp,
+            };
+
+            clients.forEach((client, clientId) => {
+              if (client.readyState === client.OPEN) {
+                client.send(JSON.stringify(topicData));
+              }
+            });
           }
         } catch (error) {
           console.error("WebSocket message error:", error.message);
