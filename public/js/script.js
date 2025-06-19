@@ -455,13 +455,50 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("chat-container").classList.add("hidden");
     document.getElementById("topic-chat-container").classList.remove("hidden");
     document.getElementById("create-topic-container").classList.add("hidden");
-    document.getElementById("profile-container").classList.add("hidden");
+    document.getElementById("profile-container")?.classList.add("hidden");
     document.getElementById("profile-edit-container").classList.add("hidden");
     document
       .getElementById("private-messages-container")
       .classList.add("hidden");
     document.body.classList.add("profile-active");
-    loadTopicMessages(topicId, 1);
+
+    // Очищаем кэш сообщений для новой темы
+    topicMessagesCache.delete(topicId);
+
+    // Загружаем сообщения
+    await loadTopicMessages(topicId, 1);
+
+    // Уведомление о новых сообщениях
+    const notifyNewMessages = () => {
+      if (
+        document
+          .getElementById("topic-chat-container")
+          .classList.contains("hidden")
+      ) {
+        document.getElementById("chat-btn").textContent =
+          "Спілкування (Нові повідомлення)";
+        document
+          .getElementById("chat-btn")
+          .classList.add("bg-red-500", "hover:bg-red-600");
+      }
+    };
+
+    ws.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      if (data.type === "message") {
+        displayMessage(data);
+      } else if (data.type === "private_message") {
+        displayPrivateMessage(data);
+      } else if (
+        data.type === "topic_message" &&
+        data.topicId === currentTopicId
+      ) {
+        displayTopicMessage(data);
+        notifyNewMessages();
+      } else if (data.type === "error") {
+        alert(data.message);
+      }
+    };
   };
 
   const loadTopicMessages = async (topicId, page = 1, append = false) => {
@@ -555,7 +592,21 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   const displayTopicMessage = (data) => {
+    if (data.topicId !== currentTopicId) {
+      return; // Игнорируем сообщения, не относящиеся к текущей теме
+    }
+
     const topicMessages = document.getElementById("topic-messages");
+    const existingMessages = topicMessagesCache.get(data.topicId) || [];
+
+    // Проверяем, нет ли уже этого сообщения в кэше (по timestamp и message)
+    const isDuplicate = existingMessages.some(
+      (msg) => msg.timestamp === data.timestamp && msg.message === data.message
+    );
+    if (isDuplicate) {
+      return; // Пропускаем дублирующиеся сообщения
+    }
+
     const messageDiv = document.createElement("div");
     messageDiv.classList.add("topic-message");
     const isSent = data.senderId === currentUser?.workerId;
@@ -593,11 +644,8 @@ document.addEventListener("DOMContentLoaded", () => {
     topicMessages.scrollTop = topicMessages.scrollHeight;
 
     // Сохраняем сообщение в кэш
-    if (topicMessagesCache.has(data.topicId)) {
-      topicMessagesCache.get(data.topicId).push(data);
-    } else {
-      topicMessagesCache.set(data.topicId, [data]);
-    }
+    existingMessages.push(data);
+    topicMessagesCache.set(data.topicId, existingMessages);
   };
 
   const showLoginPage = () => {
@@ -1162,22 +1210,51 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  sendTopicChatBtn.addEventListener("click", () => {
+  sendTopicChatBtn.addEventListener("click", async () => {
     const message = topicChatInput.value.trim();
-    if (message && ws && ws.readyState === WebSocket.OPEN && currentTopicId) {
-      const data = {
-        type: "topic_message",
-        topicId: currentTopicId,
-        message: message,
-        senderId: currentUser.workerId,
-        senderName:
-          `${currentUser.firstName || ""} ${
-            currentUser.lastName || ""
-          }`.trim() || "Аноним",
-        timestamp: new Date().toISOString(),
-      };
-      ws.send(JSON.stringify(data));
-      topicChatInput.value = "";
+    if (!message) {
+      alert("Повідомлення не може бути порожнім");
+      return;
+    }
+    if (message.length > 500) {
+      alert("Повідомлення занадто довге (макс. 500 символів)");
+      return;
+    }
+    if (ws && ws.readyState === WebSocket.OPEN && currentTopicId) {
+      try {
+        const token = localStorage.getItem("token");
+        const response = await fetch(`/api/topics/${currentTopicId}`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        const data = await response.json();
+        if (!response.ok) {
+          alert(data.error || "Помилка перевірки статусу теми");
+          return;
+        }
+        if (data.topic.isClosed) {
+          alert("Ця тема закрита");
+          return;
+        }
+        const topicData = {
+          type: "topic_message",
+          topicId: currentTopicId,
+          message: message,
+          senderId: currentUser.workerId,
+          senderName:
+            `${currentUser.firstName || ""} ${
+              currentUser.lastName || ""
+            }`.trim() || "Анонім",
+          timestamp: new Date().toISOString(),
+        };
+        ws.send(JSON.stringify(topicData));
+        topicChatInput.value = "";
+      } catch (error) {
+        alert("Помилка відправки повідомлення: " + error.message);
+      }
     }
   });
 

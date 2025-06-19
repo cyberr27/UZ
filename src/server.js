@@ -179,14 +179,12 @@ wss.on("connection", (ws, req) => {
           const messageData = JSON.parse(data);
 
           if (messageData.type === "subscribe_topic") {
-            // Подписка на тему
             const topicId = messageData.topicId;
             const subscriptions = topicSubscriptions.get(user.workerId);
             subscriptions.add(topicId);
             console.log(`User ${user.workerId} subscribed to topic ${topicId}`);
             return;
           } else if (messageData.type === "unsubscribe_topic") {
-            // Отписка от темы
             const topicId = messageData.topicId;
             const subscriptions = topicSubscriptions.get(user.workerId);
             subscriptions.delete(topicId);
@@ -196,6 +194,15 @@ wss.on("connection", (ws, req) => {
             return;
           } else if (messageData.type === "message") {
             // Общие сообщения
+            if (messageData.message.length > 500) {
+              ws.send(
+                JSON.stringify({
+                  type: "error",
+                  message: "Сообщение слишком длинное (макс. 500 символов)",
+                })
+              );
+              return;
+            }
             const broadcastData = {
               type: "message",
               senderId: user.workerId,
@@ -210,6 +217,15 @@ wss.on("connection", (ws, req) => {
             });
           } else if (messageData.type === "private_message") {
             // Приватные сообщения
+            if (messageData.message.length > 500) {
+              ws.send(
+                JSON.stringify({
+                  type: "error",
+                  message: "Сообщение слишком длинное (макс. 500 символов)",
+                })
+              );
+              return;
+            }
             const recipient = await User.findOne({
               workerId: messageData.recipientId,
             });
@@ -249,6 +265,16 @@ wss.on("connection", (ws, req) => {
               ws.send(JSON.stringify(privateData));
             }
           } else if (messageData.type === "topic_message") {
+            // Сообщения в теме
+            if (messageData.message.length > 500) {
+              ws.send(
+                JSON.stringify({
+                  type: "error",
+                  message: "Сообщение слишком длинное (макс. 500 символов)",
+                })
+              );
+              return;
+            }
             const topic = await Topic.findById(messageData.topicId);
             if (!topic) {
               ws.send(
@@ -271,6 +297,7 @@ wss.on("connection", (ws, req) => {
 
             const topicMessage = new TopicMessage({
               topicId: messageData.topicId,
+              helmet: true,
               senderId: user.workerId,
               senderName: messageData.senderName,
               message: messageData.message,
@@ -309,6 +336,12 @@ wss.on("connection", (ws, req) => {
           }
         } catch (error) {
           console.error("WebSocket message error:", error.message);
+          ws.send(
+            JSON.stringify({
+              type: "error",
+              message: "Ошибка обработки сообщения: " + error.message,
+            })
+          );
         }
       });
 
