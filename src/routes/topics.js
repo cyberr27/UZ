@@ -71,6 +71,29 @@ router.get("/", async (req, res) => {
   }
 });
 
+// Получение информации о теме
+router.get("/:topicId", async (req, res) => {
+  try {
+    const token = req.headers.authorization?.split(" ")[1];
+    if (!token) return res.status(401).json({ error: "Токен не предоставлен" });
+
+    jwt.verify(token, process.env.JWT_SECRET);
+
+    const topicId = req.params.topicId;
+    const topic = await Topic.findById(topicId);
+    if (!topic) {
+      return res.status(404).json({ error: "Тема не найдена" });
+    }
+
+    res.json({ topic });
+  } catch (error) {
+    if (error.name === "JsonWebTokenError") {
+      return res.status(401).json({ error: "Недействительный токен" });
+    }
+    res.status(500).json({ error: "Ошибка сервера: " + error.message });
+  }
+});
+
 // Получение сообщений в теме
 router.get("/:topicId/messages", async (req, res) => {
   try {

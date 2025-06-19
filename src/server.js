@@ -137,6 +137,11 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: "Внутрішня помилка сервера" });
 });
 
+// Обработка неизвестных маршрутов
+app.use((req, res) => {
+  res.status(404).json({ error: "Маршрут не найден" });
+});
+
 mongoose
   .connect(process.env.MONGO_URI)
   .then(() => console.log("Connected to MongoDB"))
