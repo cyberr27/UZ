@@ -559,7 +559,7 @@ input:focus {
 
 #create-topic-btn {
   position: absolute;
-  top:78%;
+  top: 78%;
   left: 22%;
   width: 16%;
   height: 10%;
@@ -610,6 +610,11 @@ input:focus {
   position: absolute;
   top: 5.5%;
   right: 4.7%;
+}
+
+.topic-item .messages {
+  font-size: 0.75rem;
+  color: #3b82f6;
 }
 
 @media (max-width: 640px) {

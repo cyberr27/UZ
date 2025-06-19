@@ -414,13 +414,18 @@ document.addEventListener("DOMContentLoaded", () => {
 
           const creatorSpan = document.createElement("div");
           creatorSpan.classList.add("creator");
-          creatorSpan.textContent = `Создал: ${topic.creatorName}`;
+          creatorSpan.textContent = `Создатель: ${topic.creatorName}`;
           topicDiv.appendChild(creatorSpan);
 
           const usersSpan = document.createElement("div");
           usersSpan.classList.add("users");
           usersSpan.textContent = `Участников: ${topic.uniqueUsersCount}`;
           topicDiv.appendChild(usersSpan);
+
+          const messagesSpan = document.createElement("div");
+          messagesSpan.classList.add("messages");
+          messagesSpan.textContent = `Сообщений: ${topic.messageCount}`;
+          topicDiv.appendChild(messagesSpan);
 
           if (!topic.isClosed) {
             topicDiv.addEventListener("click", () => {

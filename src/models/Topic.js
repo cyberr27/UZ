@@ -6,6 +6,7 @@ const topicSchema = new mongoose.Schema({
   creatorName: { type: String, required: true }, // Имя создателя
   createdAt: { type: Date, default: Date.now },
   uniqueUsersCount: { type: Number, default: 1 }, // Кол-во уникальных пользователей
+  messageCount: { type: Number, default: 0 }, // Кол-во сообщений в теме
   isClosed: { type: Boolean, default: false }, // Закрыта ли тема
 });
 

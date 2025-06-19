@@ -19,7 +19,6 @@ router.post("/", async (req, res) => {
     if (!title || title.trim().length < 3)
       return res.status(400).json({ error: "Название темы слишком короткое" });
 
-    // Проверка на существование темы с таким же названием
     const existingTopic = await Topic.findOne({ title: title.trim() });
     if (existingTopic) {
       return res
@@ -32,6 +31,8 @@ router.post("/", async (req, res) => {
       creatorId: user.workerId,
       creatorName:
         `${user.firstName || ""} ${user.lastName || ""}`.trim() || "Аноним",
+      uniqueUsersCount: 1,
+      messageCount: 0,
     });
     await topic.save();
 
@@ -56,7 +57,7 @@ router.get("/", async (req, res) => {
     const skip = (page - 1) * limit;
 
     const topics = await Topic.find({ isClosed: false })
-      .sort({ uniqueUsersCount: -1, createdAt: -1 })
+      .sort({ messageCount: -1, uniqueUsersCount: -1, createdAt: -1 })
       .skip(skip)
       .limit(limit);
 
