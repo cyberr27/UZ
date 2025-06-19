@@ -2,6 +2,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let ws = null;
   let currentUser = null;
   let currentTopicId = null;
+  const topicMessagesCache = new Map();
 
   // Функция генерации QR-кода
   const generateQRCode = () => {
@@ -460,28 +461,70 @@ document.addEventListener("DOMContentLoaded", () => {
       .getElementById("private-messages-container")
       .classList.add("hidden");
     document.body.classList.add("profile-active");
-    loadTopicMessages(topicId);
+    loadTopicMessages(topicId, 1);
   };
 
-  const loadTopicMessages = async (topicId) => {
+  const loadTopicMessages = async (topicId, page = 1, append = false) => {
+    const topicMessages = document.getElementById("topic-messages");
+    const loadMoreBtn = document.getElementById("load-more-topic-messages");
+
+    // Проверяем кэш
+    if (page === 1 && topicMessagesCache.has(topicId) && !append) {
+      topicMessages.innerHTML = "";
+      topicMessagesCache.get(topicId).forEach((msg) => {
+        displayTopicMessage({
+          type: "topic_message",
+          topicId: msg.topicId,
+          senderId: msg.senderId,
+          senderName: msg.senderName,
+          message: msg.message,
+          timestamp: msg.timestamp,
+        });
+      });
+      topicMessages.scrollTop = topicMessages.scrollHeight;
+    }
+
     try {
       const token = localStorage.getItem("token");
       if (!token) {
-        alert("Токен отсутствует. Пожалуйста, войдите снова.");
+        alert("Токен відсутній. Будь ласка, увійдіть знову.");
+        localStorage.removeItem("token");
+        showLoginPage();
         return;
       }
 
-      const response = await fetch(`/api/topics/${topicId}/messages`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const response = await fetch(
+        `/api/topics/${topicId}/messages?page=${page}&limit=50`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.status === 401) {
+        alert("Сесія завершена. Будь ласка, увійдіть знову.");
+        localStorage.removeItem("token");
+        showLoginPage();
+        return;
+      }
+
       const data = await response.json();
       if (response.ok) {
-        const topicMessages = document.getElementById("topic-messages");
-        topicMessages.innerHTML = "";
+        if (!append) {
+          topicMessages.innerHTML = "";
+        }
+        if (page === 1) {
+          topicMessagesCache.set(topicId, data.messages);
+        } else {
+          topicMessagesCache.set(topicId, [
+            ...data.messages,
+            ...(topicMessagesCache.get(topicId) || []),
+          ]);
+        }
+
         data.messages.forEach((msg) => {
           displayTopicMessage({
             type: "topic_message",
@@ -492,12 +535,22 @@ document.addEventListener("DOMContentLoaded", () => {
             timestamp: msg.timestamp,
           });
         });
+
+        topicMessages.scrollTop = topicMessages.scrollHeight;
+
+        // Показываем/скрываем кнопку "Загрузить ещё"
+        if (data.total > page * data.limit) {
+          loadMoreBtn.classList.remove("hidden");
+          loadMoreBtn.dataset.nextPage = page + 1;
+        } else {
+          loadMoreBtn.classList.add("hidden");
+        }
       } else {
-        alert(data.error || "Ошибка загрузки сообщений темы");
+        alert(data.error || "Помилка завантаження повідомлень теми");
       }
     } catch (error) {
-      console.error("Ошибка загрузки сообщений темы:", error);
-      alert("Ошибка загрузки сообщений темы: " + error.message);
+      console.error("Помилка завантаження повідомлень теми:", error);
+      alert("Помилка завантаження повідомлень теми: " + error.message);
     }
   };
 
@@ -510,9 +563,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const senderNameSpan = document.createElement("span");
     senderNameSpan.classList.add("chat-username");
-    senderNameSpan.textContent = data.senderName || "Аноним";
+    senderNameSpan.textContent = data.senderName || "Анонім";
     senderNameSpan.style.cursor = "pointer";
-    senderNameSpan.title = "Нажмите, чтобы просмотреть профиль";
+    senderNameSpan.title = "Натисніть, щоб переглянути профіль";
 
     senderNameSpan.addEventListener("click", () => {
       openUserProfileInNewTab(data.senderId);
@@ -538,6 +591,26 @@ document.addEventListener("DOMContentLoaded", () => {
 
     topicMessages.appendChild(messageDiv);
     topicMessages.scrollTop = topicMessages.scrollHeight;
+
+    // Сохраняем сообщение в кэш
+    if (topicMessagesCache.has(data.topicId)) {
+      topicMessagesCache.get(data.topicId).push(data);
+    } else {
+      topicMessagesCache.set(data.topicId, [data]);
+    }
+  };
+
+  const showLoginPage = () => {
+    document.getElementById("login-form").classList.remove("hidden");
+    document.getElementById("profile").classList.add("hidden");
+    document.getElementById("profile-edit-container").classList.add("hidden");
+    document.getElementById("chat-container").classList.add("hidden");
+    document
+      .getElementById("private-messages-container")
+      .classList.add("hidden");
+    document.getElementById("create-topic-container").classList.add("hidden");
+    document.getElementById("topic-chat-container").classList.add("hidden");
+    document.body.classList.remove("profile-active");
   };
 
   checkAuth();
@@ -1126,4 +1199,15 @@ document.addEventListener("DOMContentLoaded", () => {
     body.classList.add("profile-active");
     currentTopicId = null;
   });
+
+  document
+    .getElementById("load-more-topic-messages")
+    .addEventListener("click", () => {
+      const nextPage = parseInt(
+        document.getElementById("load-more-topic-messages").dataset.nextPage
+      );
+      if (currentTopicId && nextPage) {
+        loadTopicMessages(currentTopicId, nextPage, true);
+      }
+    });
 });

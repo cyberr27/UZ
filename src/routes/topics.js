@@ -80,11 +80,18 @@ router.get("/:topicId/messages", async (req, res) => {
     jwt.verify(token, process.env.JWT_SECRET);
 
     const topicId = req.params.topicId;
-    const messages = await TopicMessage.find({ topicId }).sort({
-      timestamp: 1,
-    });
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 50;
+    const skip = (page - 1) * limit;
 
-    res.json({ messages });
+    const messages = await TopicMessage.find({ topicId })
+      .sort({ timestamp: 1 })
+      .skip(skip)
+      .limit(limit);
+
+    const total = await TopicMessage.countDocuments({ topicId });
+
+    res.json({ messages, total, page, limit });
   } catch (error) {
     if (error.name === "JsonWebTokenError")
       return res.status(401).json({ error: "Недействительный токен" });
