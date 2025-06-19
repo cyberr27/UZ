@@ -19,6 +19,14 @@ router.post("/", async (req, res) => {
     if (!title || title.trim().length < 3)
       return res.status(400).json({ error: "Название темы слишком короткое" });
 
+    // Проверка на существование темы с таким же названием
+    const existingTopic = await Topic.findOne({ title: title.trim() });
+    if (existingTopic) {
+      return res
+        .status(400)
+        .json({ error: "Тема с таким названием уже существует" });
+    }
+
     const topic = new Topic({
       title: title.trim(),
       creatorId: user.workerId,

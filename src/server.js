@@ -145,6 +145,7 @@ mongoose
 const wss = new WebSocketServer({ server });
 
 const clients = new Map();
+const topicSubscriptions = new Map(); // Хранит подписки клиентов на темы
 
 wss.on("connection", (ws, req) => {
   const urlParams = new URLSearchParams(req.url.split("?")[1]);
@@ -170,11 +171,31 @@ wss.on("connection", (ws, req) => {
       clients.set(user.workerId, ws);
       console.log(`User ${user.workerId} connected`);
 
+      // Инициализируем подписки для пользователя
+      topicSubscriptions.set(user.workerId, new Set());
+
       ws.on("message", async (data) => {
         try {
           const messageData = JSON.parse(data);
-          if (messageData.type === "message") {
-            // Существующая логика для общих сообщений
+
+          if (messageData.type === "subscribe_topic") {
+            // Подписка на тему
+            const topicId = messageData.topicId;
+            const subscriptions = topicSubscriptions.get(user.workerId);
+            subscriptions.add(topicId);
+            console.log(`User ${user.workerId} subscribed to topic ${topicId}`);
+            return;
+          } else if (messageData.type === "unsubscribe_topic") {
+            // Отписка от темы
+            const topicId = messageData.topicId;
+            const subscriptions = topicSubscriptions.get(user.workerId);
+            subscriptions.delete(topicId);
+            console.log(
+              `User ${user.workerId} unsubscribed from topic ${topicId}`
+            );
+            return;
+          } else if (messageData.type === "message") {
+            // Общие сообщения
             const broadcastData = {
               type: "message",
               senderId: user.workerId,
@@ -188,7 +209,7 @@ wss.on("connection", (ws, req) => {
               }
             });
           } else if (messageData.type === "private_message") {
-            // Существующая логика для приватных сообщений
+            // Приватные сообщения
             const recipient = await User.findOne({
               workerId: messageData.recipientId,
             });
@@ -228,7 +249,7 @@ wss.on("connection", (ws, req) => {
               ws.send(JSON.stringify(privateData));
             }
           } else if (messageData.type === "topic_message") {
-            // Новая логика для сообщений в темах
+            // Сообщения в теме
             const topic = await Topic.findById(messageData.topicId);
             if (!topic) {
               ws.send(
@@ -274,8 +295,14 @@ wss.on("connection", (ws, req) => {
               timestamp: messageData.timestamp,
             };
 
+            // Отправляем сообщение только подписанным на тему клиентам
             clients.forEach((client, clientId) => {
-              if (client.readyState === client.OPEN) {
+              const subscriptions =
+                topicSubscriptions.get(clientId) || new Set();
+              if (
+                client.readyState === client.OPEN &&
+                subscriptions.has(messageData.topicId)
+              ) {
                 client.send(JSON.stringify(topicData));
               }
             });
@@ -287,6 +314,7 @@ wss.on("connection", (ws, req) => {
 
       ws.on("close", () => {
         clients.delete(user.workerId);
+        topicSubscriptions.delete(user.workerId);
         console.log(`User ${user.workerId} disconnected`);
       });
     })
