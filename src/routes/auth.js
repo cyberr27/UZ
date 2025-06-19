@@ -9,6 +9,16 @@ const isValidEmail = (email) => {
   return emailRegex.test(email);
 };
 
+// Генерація access-токена
+const generateAccessToken = (userId) => {
+  return jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: "1h" });
+};
+
+// Генерація refresh-токена
+const generateRefreshToken = (userId) => {
+  return jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: "7d" });
+};
+
 router.post("/register", async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -68,11 +78,17 @@ router.post("/login", async (req, res) => {
     if (!isMatch) {
       return res.status(400).json({ error: "Невірні облікові дані" });
     }
-    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
-      expiresIn: "5m",
-    });
+
+    const accessToken = generateAccessToken(user._id);
+    const refreshToken = generateRefreshToken(user._id);
+
+    // Зберігаємо refresh-токен у базі
+    user.refreshTokens.push({ token: refreshToken });
+    await user.save();
+
     res.json({
-      token,
+      accessToken,
+      refreshToken,
       user: {
         email: user.email,
         firstName: user.firstName,
@@ -87,6 +103,36 @@ router.post("/login", async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({ error: "Помилка сервера: " + error.message });
+  }
+});
+
+router.post("/refresh-token", async (req, res) => {
+  const { refreshToken } = req.body;
+  if (!refreshToken) {
+    return res.status(400).json({ error: "Refresh-токен не надано" });
+  }
+
+  try {
+    const decoded = jwt.verify(refreshToken, process.env.JWT_SECRET);
+    const user = await User.findById(decoded.userId);
+
+    if (!user || !user.refreshTokens.find((t) => t.token === refreshToken)) {
+      return res.status(401).json({ error: "Недійсний refresh-токен" });
+    }
+
+    const accessToken = generateAccessToken(user._id);
+    const newRefreshToken = generateRefreshToken(user._id);
+
+    // Оновлюємо refresh-токен у базі
+    user.refreshTokens = user.refreshTokens.filter(
+      (t) => t.token !== refreshToken
+    );
+    user.refreshTokens.push({ token: newRefreshToken });
+    await user.save();
+
+    res.json({ accessToken, refreshToken: newRefreshToken });
+  } catch (error) {
+    res.status(401).json({ error: "Недійсний refresh-токен" });
   }
 });
 
@@ -207,6 +253,27 @@ router.get("/user/:workerId", async (req, res) => {
     }
     res.status(500).json({ error: "Помилка сервера: " + error.message });
   }
+});
+
+router.use(async (req, res, next) => {
+  if (req.headers.authorization) {
+    const token = req.headers.authorization.split(" ")[1];
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      const user = await User.findById(decoded.userId);
+      if (user) {
+        user.refreshTokens = user.refreshTokens.filter(
+          (t) =>
+            new Date(t.createdAt) >
+            new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+        );
+        await user.save();
+      }
+    } catch (error) {
+      // Ігноруємо помилки верифікації
+    }
+  }
+  next();
 });
 
 module.exports = router;

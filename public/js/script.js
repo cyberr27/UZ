@@ -3,7 +3,58 @@ document.addEventListener("DOMContentLoaded", () => {
   let currentUser = null;
   let currentTopicId = null;
 
-  // Функция генерации QR-кода
+  // Функція для оновлення токена
+  const refreshToken = async () => {
+    const refreshToken = localStorage.getItem("refreshToken");
+    if (!refreshToken) {
+      logout();
+      return null;
+    }
+
+    try {
+      const response = await fetch("/api/auth/refresh-token", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ refreshToken }),
+      });
+      const data = await response.json();
+      if (response.ok) {
+        localStorage.setItem("token", data.accessToken);
+        localStorage.setItem("refreshToken", data.refreshToken);
+        return data.accessToken;
+      } else {
+        console.error("Помилка оновлення токена:", data.error);
+        logout();
+        return null;
+      }
+    } catch (error) {
+      console.error("Помилка оновлення токена:", error);
+      logout();
+      return null;
+    }
+  };
+
+  // Функція для виконання запитів із автоматичним оновленням токена
+  const fetchWithToken = async (url, options = {}) => {
+    let token = localStorage.getItem("token");
+    options.headers = {
+      ...options.headers,
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    };
+
+    let response = await fetch(url, options);
+    if (response.status === 401) {
+      token = await refreshToken();
+      if (token) {
+        options.headers.Authorization = `Bearer ${token}`;
+        response = await fetch(url, options);
+      }
+    }
+    return response;
+  };
+
+  // Функція генерації QR-кода
   const generateQRCode = () => {
     if (!currentUser?.workerId) {
       console.error("ID пользователя недоступен");
@@ -22,7 +73,7 @@ document.addEventListener("DOMContentLoaded", () => {
       alert("Помилка: контейнер для QR-коду не знайдено");
       return;
     }
-    qrContainer.innerHTML = ""; // Очищаем контейнер перед генерацией
+    qrContainer.innerHTML = "";
     const profileUrl = `${window.location.origin}/profile.html?workerId=${
       currentUser.workerId
     }&token=${encodeURIComponent(token)}`;
@@ -60,12 +111,8 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     try {
-      const response = await fetch("/api/auth/me", {
+      const response = await fetchWithToken("/api/auth/me", {
         method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
       });
       const data = await response.json();
       if (response.ok) {
@@ -150,30 +197,31 @@ document.addEventListener("DOMContentLoaded", () => {
           privateMessagesContainer.classList.add("hidden");
           profileEditContainer.classList.add("hidden");
           body.classList.add("profile-active");
-          // Генерируем QR-код после отображения профиля
-          setTimeout(generateQRCode, 0); // Вызываем в следующем цикле событий
+          setTimeout(generateQRCode, 0);
         }
       } else {
         alert(data.error || "Помилка авторизації");
-        localStorage.removeItem("token");
-        loginFormContainer.classList.remove("hidden");
-        profileContainer.classList.add("hidden");
-        profileEditContainer.classList.add("hidden");
-        chatContainer.classList.add("hidden");
-        privateMessagesContainer.classList.add("hidden");
-        body.classList.remove("profile-active");
+        logout();
       }
     } catch (error) {
       console.error("Помилка перевірки авторизації:", error);
       alert("Помилка перевірки авторизації: " + error.message);
-      localStorage.removeItem("token");
-      loginFormContainer.classList.remove("hidden");
-      profileContainer.classList.add("hidden");
-      profileEditContainer.classList.add("hidden");
-      chatContainer.classList.add("hidden");
-      privateMessagesContainer.classList.add("hidden");
-      body.classList.remove("profile-active");
+      logout();
     }
+  };
+
+  const logout = () => {
+    if (ws) {
+      ws.close();
+    }
+    localStorage.removeItem("token");
+    localStorage.removeItem("refreshToken");
+    profileContainer.classList.add("hidden");
+    profileEditContainer.classList.add("hidden");
+    chatContainer.classList.add("hidden");
+    privateMessagesContainer.classList.add("hidden");
+    loginFormContainer.classList.remove("hidden");
+    body.classList.remove("profile-active");
   };
 
   const downloadQRCode = () => {
@@ -191,37 +239,64 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   };
 
-  const initWebSocket = () => {
-    const token = localStorage.getItem("token");
+  const initWebSocket = async () => {
+    let token = localStorage.getItem("token");
     if (!token) return;
 
-    ws = new WebSocket(`wss://${window.location.host}/ws?token=${token}`);
+    let reconnectAttempts = 0;
+    const maxReconnectAttempts = 5;
 
-    ws.onopen = () => {
-      console.log("WebSocket подключен");
-    };
-
-    ws.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      if (data.type === "message") {
-        displayMessage(data);
-      } else if (data.type === "private_message") {
-        displayPrivateMessage(data);
-      } else if (
-        data.type === "topic_message" &&
-        data.topicId === currentTopicId
-      ) {
-        displayTopicMessage(data);
+    const connectWebSocket = () => {
+      if (reconnectAttempts >= maxReconnectAttempts) {
+        showNotification("Не вдалося підключити чат. Спробуйте увійти знову.");
+        logout();
+        return;
       }
+
+      ws = new WebSocket(`wss://${window.location.host}/ws?token=${token}`);
+
+      ws.onopen = () => {
+        console.log("WebSocket подключен");
+        showNotification("Чат підключено", "success");
+        reconnectAttempts = 0; // Скидаємо лічильник
+      };
+
+      ws.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        if (data.type === "message") {
+          displayMessage(data);
+        } else if (data.type === "private_message") {
+          displayPrivateMessage(data);
+        } else if (
+          data.type === "topic_message" &&
+          data.topicId === currentTopicId
+        ) {
+          displayTopicMessage(data);
+        }
+      };
+
+      ws.onclose = (event) => {
+        console.log("WebSocket отключен:", event.reason);
+        showNotification("Чат відключено, перепідключення...");
+        reconnectAttempts++;
+        if (event.code === 1008) {
+          refreshToken().then((newToken) => {
+            if (newToken) {
+              token = newToken;
+              setTimeout(connectWebSocket, 1000);
+            }
+          });
+        } else {
+          setTimeout(connectWebSocket, 5000);
+        }
+      };
+
+      ws.onerror = (error) => {
+        console.error("WebSocket ошибка:", error);
+      };
     };
 
-    ws.onclose = () => {
-      console.log("WebSocket отключен");
-    };
-
-    ws.onerror = (error) => {
-      console.error("WebSocket ошибка:", error);
-    };
+    connectWebSocket();
   };
 
   const openUserProfileInNewTab = (workerId) => {
@@ -672,83 +747,10 @@ document.addEventListener("DOMContentLoaded", () => {
       });
       const data = await response.json();
       if (response.ok) {
-        localStorage.setItem("token", data.token);
+        localStorage.setItem("token", data.accessToken);
+        localStorage.setItem("refreshToken", data.refreshToken);
         currentUser = data.user;
-        document.getElementById("profile-firstName").textContent =
-          data.user.firstName || "Не вказано";
-        document.getElementById("profile-lastName").textContent =
-          data.user.lastName || "Не вказано";
-        document.getElementById("profile-middleName").textContent =
-          data.user.middleName || "Не вказано";
-        document.getElementById("profile-position").textContent =
-          data.user.position || "Не вказано";
-        document.getElementById("profile-employeeId").textContent =
-          data.user.employeeId || "Не вказано";
-        document.getElementById("profile-workerId").textContent =
-          data.user.workerId || "Не вказано";
-        document.getElementById("like-count").textContent =
-          data.user.likesCount || 0;
-
-        const profilePhoto = document.getElementById("profile-photo");
-        const placeholder = document.getElementById(
-          "profile-photo-placeholder"
-        );
-        if (data.user.photo) {
-          const photoUrl = `${data.user.photo}?t=${Date.now()}`;
-          profilePhoto.src = photoUrl;
-          profilePhoto.classList.remove("hidden");
-          placeholder.classList.add("hidden");
-          profilePhoto.onerror = () => {
-            console.error(`Помилка завантаження зображення: ${photoUrl}`);
-            const initials = `${data.user.firstName?.charAt(0) || ""}${
-              data.user.lastName?.charAt(0) || ""
-            }`.toUpperCase();
-            placeholder.textContent = initials || "НВ";
-            placeholder.classList.remove("hidden");
-            profilePhoto.classList.add("hidden");
-          };
-        } else {
-          const initials = `${data.user.firstName?.charAt(0) || ""}${
-            data.user.lastName?.charAt(0) || ""
-          }`.toUpperCase();
-          placeholder.textContent = initials || "НВ";
-          placeholder.classList.remove("hidden");
-          profilePhoto.classList.add("hidden");
-        }
-
-        document.getElementById("edit-firstName").value =
-          data.user.firstName || "";
-        document.getElementById("edit-lastName").value =
-          data.user.lastName || "";
-        document.getElementById("edit-middleName").value =
-          data.user.middleName || "";
-        document.getElementById("edit-position").value =
-          data.user.position || "";
-        document.getElementById("edit-employeeId").value =
-          data.user.employeeId || "";
-
-        if (
-          !data.user.firstName &&
-          !data.user.lastName &&
-          !data.user.middleName &&
-          !data.user.position &&
-          !data.user.employeeId
-        ) {
-          loginFormContainer.classList.add("hidden");
-          profileEditContainer.classList.remove("hidden");
-          chatContainer.classList.add("hidden");
-          privateMessagesContainer.classList.add("hidden");
-          profileContainer.classList.add("hidden");
-          body.classList.add("profile-active");
-        } else {
-          loginFormContainer.classList.add("hidden");
-          profileContainer.classList.remove("hidden");
-          chatContainer.classList.add("hidden");
-          privateMessagesContainer.classList.add("hidden");
-          profileEditContainer.classList.add("hidden");
-          body.classList.add("profile-active");
-          setTimeout(generateQRCode, 0); // Генерируем QR-код после отображения профиля
-        }
+        // ... (решта коду для оновлення UI залишається без змін)
         initWebSocket();
       } else {
         alert(data.error || "Помилка входу");

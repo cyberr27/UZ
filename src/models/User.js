@@ -18,6 +18,9 @@ const userSchema = new mongoose.Schema({
       isLike: { type: Boolean },
     },
   ],
+  refreshTokens: [
+    { token: String, createdAt: { type: Date, default: Date.now } },
+  ], // Нове поле
 });
 
 userSchema.pre("save", async function (next) {

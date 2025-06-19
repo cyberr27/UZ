@@ -557,6 +557,14 @@ input:focus {
   width: 15%;
 }
 
+#create-topic-btn {
+  position: absolute;
+  top:78%;
+  left: 20%;
+  width: 16%;
+  height: 10%;
+}
+
 #back-to-chat-from-create-topic {
   width: 20%;
 }

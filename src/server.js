@@ -155,8 +155,8 @@ wss.on("connection", (ws, req) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     userId = decoded.userId;
   } catch (error) {
-    console.error("WebSocket auth error:", error.message);
-    ws.close(1008, "Invalid token");
+    console.error(`WebSocket auth error: ${error.message}, token: ${token}`);
+    ws.close(1008, `Invalid token: ${error.message}`);
     return;
   }
 
