@@ -325,13 +325,14 @@ wss.on("connection", (ws, req) => {
               `Сохранено сообщение ${savedMessage._id} в теме ${messageData.topicId}`
             );
 
-            topic.messageCount = await TopicMessage.distinct("senderId", {
+            const uniqueUsers = await TopicMessage.distinct("senderId", {
               topicId: messageData.topicId,
             });
-            topic.uniqueUsersCount = uniqueUsers.length;
+            topic.messageCount += 1; // Увеличиваем счетчик сообщений
+            topic.uniqueUsersCount = uniqueUsers.length; // Устанавливаем количество уникальных пользователей
             await topic.save();
             console.log(
-              `Обновлена тема ${topicId} с messageCount=${topic.messageCount}`
+              `Обновлена тема ${messageData.topicId} с messageCount=${topic.messageCount}`
             );
 
             const topicData = {
@@ -345,7 +346,8 @@ wss.on("connection", (ws, req) => {
             };
 
             clients.forEach((client, clientId) => {
-              const messages = topicSubscriptions.get(clientId) || new Set();
+              const subscriptions =
+                topicSubscriptions.get(clientId) || new Set();
               if (
                 client.readyState === WebSocket.OPEN &&
                 subscriptions.has(messageData.topicId)
