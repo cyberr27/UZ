@@ -633,6 +633,9 @@ input:focus {
 .topic-item .messages {
   font-size: 0.75rem;
   color: #3b82f6;
+  position: absolute;
+  top: 50%;
+  left: 50%;
 }
 
 @media (max-width: 640px) {
