@@ -480,6 +480,14 @@ document.addEventListener("DOMContentLoaded", () => {
         document
           .getElementById("chat-btn")
           .classList.add("bg-red-500", "hover:bg-red-600");
+      } else {
+        document.getElementById("chat-btn").textContent = "Спілкування";
+        document
+          .getElementById("chat-btn")
+          .classList.remove("bg-red-500", "hover:bg-red-600");
+        document
+          .getElementById("chat-btn")
+          .classList.add("bg-purple-500", "hover:bg-purple-600");
       }
     };
 
@@ -1189,8 +1197,18 @@ document.addEventListener("DOMContentLoaded", () => {
     body.classList.add("profile-active");
     topicTitleInput.value = "";
     loadTopics();
+    // Периодическое обновление списка тем
+    const topicRefreshInterval = setInterval(loadTopics, 30000); // Каждые 30 секунд
+    createTopicContainer.addEventListener(
+      "transitionend",
+      () => {
+        if (createTopicContainer.classList.contains("hidden")) {
+          clearInterval(topicRefreshInterval);
+        }
+      },
+      { once: true }
+    );
   });
-
   backToChatFromCreateTopic.addEventListener("click", () => {
     createTopicContainer.classList.add("hidden");
     chatContainer.classList.remove("hidden");
@@ -1306,6 +1324,7 @@ document.addEventListener("DOMContentLoaded", () => {
   backToChatFromTopic.addEventListener("click", () => {
     if (currentTopicId) {
       unsubscribeFromTopic(currentTopicId);
+      topicMessagesCache.delete(currentTopicId); // Очищаем кэш для темы
     }
     topicChatContainer.classList.add("hidden");
     chatContainer.classList.remove("hidden");
