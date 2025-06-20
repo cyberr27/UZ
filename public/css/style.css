@@ -583,13 +583,14 @@ input:focus {
 
 #topic-messages {
   background: #fff;
-  border-color: #e5e7eb;
+  border: 1px solid #e5e7eb;
   height: 62%;
   overflow-y: auto;
   padding: 10px;
   border-radius: 8px;
   display: flex;
   flex-direction: column;
+  gap: 8px;
 }
 
 .topic-message {
