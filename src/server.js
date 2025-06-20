@@ -270,7 +270,6 @@ wss.on("connection", (ws, req) => {
               ws.send(JSON.stringify(privateData));
             }
           } else if (messageData.type === "topic_message") {
-            // Сообщения в теме
             if (messageData.message.length > 500) {
               ws.send(
                 JSON.stringify({
@@ -300,6 +299,20 @@ wss.on("connection", (ws, req) => {
               return;
             }
 
+            // Проверяем, не существует ли сообщение с таким же содержимым, отправителем и временем
+            const existingMessage = await TopicMessage.findOne({
+              topicId: messageData.topicId,
+              senderId: user.workerId,
+              message: messageData.message,
+              timestamp: messageData.timestamp,
+            });
+            if (existingMessage) {
+              console.log(
+                `Дублирующееся сообщение в теме ${messageData.topicId} от ${user.workerId}`
+              );
+              return;
+            }
+
             const topicMessage = new TopicMessage({
               topicId: messageData.topicId,
               senderId: user.workerId,
@@ -307,18 +320,24 @@ wss.on("connection", (ws, req) => {
               message: messageData.message,
               timestamp: messageData.timestamp,
             });
-            await topicMessage.save();
+            const savedMessage = await topicMessage.save();
+            console.log(
+              `Сохранено сообщение ${savedMessage._id} в теме ${messageData.topicId}`
+            );
 
-            topic.messageCount += 1;
-            const uniqueUsers = await TopicMessage.distinct("senderId", {
+            topic.messageCount = await TopicMessage.distinct("senderId", {
               topicId: messageData.topicId,
             });
             topic.uniqueUsersCount = uniqueUsers.length;
             await topic.save();
+            console.log(
+              `Обновлена тема ${topicId} с messageCount=${topic.messageCount}`
+            );
 
             const topicData = {
               type: "topic_message",
               topicId: messageData.topicId,
+              messageId: savedMessage._id, // Добавляем ID сообщения
               senderId: user.workerId,
               senderName: messageData.senderName,
               message: messageData.message,
@@ -326,15 +345,14 @@ wss.on("connection", (ws, req) => {
             };
 
             clients.forEach((client, clientId) => {
-              const subscriptions =
-                topicSubscriptions.get(clientId) || new Set();
+              const messages = topicSubscriptions.get(clientId) || new Set();
               if (
-                client.readyState === client.OPEN &&
+                client.readyState === WebSocket.OPEN &&
                 subscriptions.has(messageData.topicId)
               ) {
                 client.send(JSON.stringify(topicData));
                 console.log(
-                  `Отправлено сообщение в тему ${messageData.topicId} для клиента ${clientId}`
+                  `Отправлено сообщение ${savedMessage._id} в тему ${messageData.topicId} для клиента ${clientId}`
                 );
               }
             });

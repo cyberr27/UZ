@@ -522,6 +522,26 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       };
     }
+
+    // Убедимся, что основной обработчик сообщений обрабатывает уведомления
+    if (ws && ws.readyState === WebSocket.OPEN) {
+      ws.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        if (data.type === "message") {
+          displayMessage(data);
+        } else if (data.type === "private_message") {
+          displayPrivateMessage(data);
+        } else if (
+          data.type === "topic_message" &&
+          data.topicId === currentTopicId
+        ) {
+          displayTopicMessage(data);
+          notifyNewMessages();
+        } else if (data.type === "error") {
+          alert(data.message);
+        }
+      };
+    }
   };
 
   const loadTopicMessages = async (topicId, page = 1, append = false) => {
@@ -531,27 +551,6 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!topicMessages) {
       console.error("Контейнер topic-messages не найден");
       alert("Ошибка: контейнер для сообщений темы не найден");
-      return;
-    }
-
-    // Используем кэш только для первой страницы, если не требуется добавление
-    if (page === 1 && topicMessagesCache.has(topicId) && !append) {
-      topicMessages.innerHTML = "";
-      const cachedMessages = topicMessagesCache.get(topicId);
-      cachedMessages.forEach((msg) => {
-        displayTopicMessage({
-          type: "topic_message",
-          topicId: msg.topicId,
-          senderId: msg.senderId,
-          senderName: msg.senderName,
-          message: msg.message,
-          timestamp: msg.timestamp,
-        });
-      });
-      topicMessages.scrollTop = topicMessages.scrollHeight;
-      console.log(
-        `Загружено ${cachedMessages.length} сообщений из кэша для темы ${topicId}`
-      );
       return;
     }
 
@@ -586,6 +585,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (response.ok) {
         if (!append) {
           topicMessages.innerHTML = "";
+          topicMessagesCache.delete(topicId); // Очищаем кэш перед загрузкой
         }
 
         if (data.messages.length === 0) {
@@ -604,22 +604,19 @@ document.addEventListener("DOMContentLoaded", () => {
         const existingMessages = topicMessagesCache.get(topicId) || [];
         const newMessages = data.messages.map((msg) => ({
           ...msg,
-          messageKey: `${msg.timestamp}_${msg.message}_${msg.senderId}`,
+          messageId: msg._id, // Используем _id как messageId
         }));
 
-        if (page === 0) {
-          topicMessagesCache.set(topicId, newMessages);
-        } else {
-          topicMessagesCache.set(topicId, [
-            ...newMessages,
-            ...existingMessages,
-          ]);
-        }
+        topicMessagesCache.set(
+          topicId,
+          append ? [...existingMessages, ...newMessages] : newMessages
+        );
 
         data.messages.forEach((msg) => {
           displayTopicMessage({
             type: "topic_message",
             topicId: msg.topicId,
+            messageId: msg._id, // Добавляем messageId
             senderId: msg.senderId,
             senderName: msg.senderName,
             message: msg.message,
@@ -663,16 +660,17 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    // Проверяем дубликат по уникальному ключу (например, timestamp + message + senderId)
-    const messageKey = `${data.timestamp}_${data.message}_${data.senderId}`;
+    // Проверяем дубликат по messageId
+    const messageId = data.messageId;
     const existingMessages = topicMessagesCache.get(data.topicId) || [];
-    const isDuplicate = existingMessages.some((msg) => {
-      const existingKey = `${msg.timestamp}_${msg.message}_${msg.senderId}`;
-      return existingKey === messageKey;
-    });
+    const isDuplicate = existingMessages.some(
+      (msg) => msg.messageId === messageId
+    );
 
     if (isDuplicate) {
-      console.log(`Дублирующееся сообщение: ${data.message}`);
+      console.log(
+        `Дублирующееся сообщение ${messageId} в теме ${data.topicId}`
+      );
       return;
     }
 
@@ -712,13 +710,11 @@ document.addEventListener("DOMContentLoaded", () => {
     topicMessages.appendChild(messageDiv);
     topicMessages.scrollTop = topicMessages.scrollHeight;
 
-    // Сохраняем сообщение в кэш
-    existingMessages.push({ ...data, messageKey });
+    // Сохраняем сообщение в кэш с messageId
+    existingMessages.push({ ...data, messageId });
     topicMessagesCache.set(data.topicId, existingMessages);
 
-    console.log(
-      `Добавлено сообщение: ${data.message} для темы ${data.topicId}`
-    );
+    console.log(`Добавлено сообщение ${messageId} в теме ${data.topicId}`);
   };
 
   const showLoginPage = () => {
@@ -1303,29 +1299,69 @@ document.addEventListener("DOMContentLoaded", () => {
       alert("Повідомлення занадто довге (макс. 500 символів)");
       return;
     }
-    if (ws && ws.readyState === WebSocket.OPEN && currentTopicId) {
-      try {
-        const token = localStorage.getItem("token");
-        const response = await fetch(`/api/topics/${currentTopicId}`, {
-          method: "GET",
+    if (!currentTopicId) {
+      alert("Тема не выбрана");
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        alert("Токен відсутній. Будь ласка, увійдіть знову.");
+        return;
+      }
+
+      // Проверяем статус темы
+      const topicResponse = await fetch(`/api/topics/${currentTopicId}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const topicData = await topicResponse.json();
+      if (!topicResponse.ok) {
+        alert(topicData.error || "Помилка перевірки статусу теми");
+        return;
+      }
+      if (topicData.topic.isClosed) {
+        alert("Ця тема закрита");
+        return;
+      }
+
+      // Сохраняем сообщение через API
+      const messageResponse = await fetch(
+        `/api/topics/${currentTopicId}/messages`,
+        {
+          method: "POST",
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-        });
-        const data = await response.json();
-        if (!response.ok) {
-          alert(data.error || "Помилка перевірки статусу теми");
-          return;
+          body: JSON.stringify({
+            message,
+            senderId: currentUser.workerId,
+            senderName:
+              `${currentUser.firstName || ""} ${
+                currentUser.lastName || ""
+              }`.trim() || "Анонім",
+            timestamp: new Date().toISOString(),
+          }),
         }
-        if (data.topic.isClosed) {
-          alert("Ця тема закрита");
-          return;
-        }
+      );
+      const messageData = await messageResponse.json();
+      if (!messageResponse.ok) {
+        alert(messageData.error || "Помилка відправки повідомлення");
+        return;
+      }
+
+      // Отправляем через WebSocket
+      if (ws && ws.readyState === WebSocket.OPEN) {
         const topicData = {
           type: "topic_message",
           topicId: currentTopicId,
-          message: message,
+          messageId: messageData.message._id, // Используем _id из ответа API
+          message,
           senderId: currentUser.workerId,
           senderName:
             `${currentUser.firstName || ""} ${
@@ -1334,10 +1370,12 @@ document.addEventListener("DOMContentLoaded", () => {
           timestamp: new Date().toISOString(),
         };
         ws.send(JSON.stringify(topicData));
-        topicChatInput.value = "";
-      } catch (error) {
-        alert("Помилка відправки повідомлення: " + error.message);
       }
+
+      topicChatInput.value = "";
+    } catch (error) {
+      console.error("Помилка відправки повідомлення:", error);
+      alert("Помилка відправки повідомлення: " + error.message);
     }
   });
 

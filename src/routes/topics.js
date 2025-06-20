@@ -122,8 +122,7 @@ router.get("/:topicId/messages", async (req, res) => {
   }
 });
 
-// Закрытие темы (только создателем или админом)
-router.put("/:topicId/close", async (req, res) => {
+router.post("/:topicId/messages", async (req, res) => {
   try {
     const token = req.headers.authorization?.split(" ")[1];
     if (!token) return res.status(401).json({ error: "Токен не предоставлен" });
@@ -132,17 +131,91 @@ router.put("/:topicId/close", async (req, res) => {
     const user = await User.findById(decoded.userId);
     if (!user) return res.status(404).json({ error: "Пользователь не найден" });
 
-    const topic = await Topic.findById(req.params.topicId);
-    if (!topic) return res.status(404).json({ error: "Тема не найдена" });
+    const topicId = req.params.topicId;
+    const { message, senderId, senderName, timestamp } = req.body;
 
-    if (topic.creatorId !== user.workerId && !user.isAdmin)
-      return res.status(403).json({ error: "Нет прав для закрытия темы" });
+    if (!message || message.length > 500) {
+      return res.status(400).json({ error: "Сообщение недопустимой длины" });
+    }
 
-    topic.isClosed = true;
+    const topic = await Topic.findById(topicId);
+    if (!topic) {
+      return res.status(404).json({ error: "Тема не найдена" });
+    }
+    if (topic.isClosed) {
+      return res.status(403).json({ error: "Тема закрыта" });
+    }
+
+    const topicMessage = new TopicMessage({
+      topicId,
+      senderId: user.workerId,
+      senderName:
+        `${user.firstName || ""} ${user.lastName || ""}`.trim() || "Аноним",
+      message,
+      timestamp: timestamp || Date.now(),
+    });
+    const savedMessage = await topicMessage.save();
+
+    topic.messageCount += 1;
+    const uniqueUsers = await TopicMessage.distinct("senderId", { topicId });
+    topic.uniqueUsersCount = uniqueUsers.length;
     await topic.save();
 
-    res.json({ message: "Тема закрыта" });
+    console.log(`Сохранено сообщение ${savedMessage._id} в теме ${topicId}`);
+
+    res.status(201).json({ message: savedMessage });
   } catch (error) {
+    console.error(
+      `Ошибка сохранения сообщения в теме ${req.params.topicId}:`,
+      error
+    );
+    if (error.name === "JsonWebTokenError")
+      return res.status(401).json({ error: "Недействительный токен" });
+    res.status(500).json({ error: "Ошибка сервера: " + error.message });
+  }
+});
+
+// Закрытие темы (только создателем или админом)
+router.get("/:topicId/messages", async (req, res) => {
+  try {
+    const token = req.headers.authorization?.split(" ")[1];
+    if (!token) return res.status(401).json({ error: "Токен не предоставлен" });
+
+    jwt.verify(token, process.env.JWT_SECRET);
+
+    const topicId = req.params.topicId;
+    console.log(
+      `Загрузка сообщений для темы ${topicId}, страница ${req.query.page}`
+    );
+
+    // Проверяем, существует ли тема
+    const topic = await Topic.findById(topicId);
+    if (!topic) {
+      console.error(`Тема ${topicId} не найдена`);
+      return res.status(404).json({ error: "Тема не найдена" });
+    }
+
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 50;
+    const skip = (page - 1) * limit;
+
+    const messages = await TopicMessage.find({ topicId })
+      .sort({ timestamp: -1 }) // Сортировка от новых к старым
+      .skip(skip)
+      .limit(limit);
+
+    const total = await TopicMessage.countDocuments({ topicId });
+
+    console.log(
+      `Найдено ${messages.length} сообщений для темы ${topicId}, всего: ${total}`
+    );
+
+    res.json({ messages, total, page, limit });
+  } catch (error) {
+    console.error(
+      `Ошибка загрузки сообщений для темы ${req.params.topicId}:`,
+      error
+    );
     if (error.name === "JsonWebTokenError")
       return res.status(401).json({ error: "Недействительный токен" });
     res.status(500).json({ error: "Ошибка сервера: " + error.message });
