@@ -505,6 +505,12 @@ document.addEventListener("DOMContentLoaded", () => {
     const topicMessages = document.getElementById("topic-messages");
     const loadMoreBtn = document.getElementById("load-more-topic-messages");
 
+    if (!topicMessages) {
+      console.error("Контейнер topic-messages не найден");
+      alert("Ошибка: контейнер для сообщений темы не найден");
+      return;
+    }
+
     // Проверяем кэш
     if (page === 1 && topicMessagesCache.has(topicId) && !append) {
       topicMessages.innerHTML = "";
@@ -519,6 +525,11 @@ document.addEventListener("DOMContentLoaded", () => {
         });
       });
       topicMessages.scrollTop = topicMessages.scrollHeight;
+      console.log(
+        `Загружено ${
+          topicMessagesCache.get(topicId).length
+        } сообщений из кэша для темы ${topicId}`
+      );
     }
 
     try {
@@ -553,6 +564,19 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!append) {
           topicMessages.innerHTML = "";
         }
+        if (data.messages.length === 0) {
+          const noMessagesDiv = document.createElement("div");
+          noMessagesDiv.textContent = "Повідомлень у цій темі поки немає";
+          noMessagesDiv.style.color = "#6b7280";
+          noMessagesClearTimeout = setTimeout(() => {
+            topicMessages.innerHTML = "";
+          }, 2000);
+          topicMessages.appendChild(noMessagesDiv);
+          loadMoreBtn.classList.add("hidden");
+          console.log(`Нет сообщений для темы ${topicId}`);
+          return;
+        }
+
         if (page === 1) {
           topicMessagesCache.set(topicId, data.messages);
         } else {
@@ -575,36 +599,47 @@ document.addEventListener("DOMContentLoaded", () => {
 
         topicMessages.scrollTop = topicMessages.scrollHeight;
 
-        // Показываем/скрываем кнопку "Загрузить ещё"
         if (data.total > page * data.limit) {
           loadMoreBtn.classList.remove("hidden");
           loadMoreBtn.dataset.nextPage = page + 1;
         } else {
           loadMoreBtn.classList.add("hidden");
         }
+
+        console.log(
+          `Загружено ${data.messages.length} сообщений для темы ${topicId}, страница ${page}`
+        );
       } else {
         alert(data.error || "Помилка завантаження повідомлень теми");
       }
     } catch (error) {
-      console.error("Помилка завантаження повідомлень теми:", error);
+      console.error("Помилка зав aнтаження повідомлень теми:", error);
       alert("Помилка завантаження повідомлень теми: " + error.message);
     }
   };
 
   const displayTopicMessage = (data) => {
     if (data.topicId !== currentTopicId) {
-      return; // Игнорируем сообщения, не относящиеся к текущей теме
+      console.log(
+        `Игнорирование сообщения для topicId ${data.topicId}, текущий topicId: ${currentTopicId}`
+      );
+      return;
     }
 
     const topicMessages = document.getElementById("topic-messages");
-    const existingMessages = topicMessagesCache.get(data.topicId) || [];
+    if (!topicMessages) {
+      console.error("Контейнер topic-messages не найден");
+      alert("Ошибка: контейнер для сообщений темы не найден");
+      return;
+    }
 
-    // Проверяем, нет ли уже этого сообщения в кэше (по timestamp и message)
+    const existingMessages = topicMessagesCache.get(data.topicId) || [];
     const isDuplicate = existingMessages.some(
       (msg) => msg.timestamp === data.timestamp && msg.message === data.message
     );
     if (isDuplicate) {
-      return; // Пропускаем дублирующиеся сообщения
+      console.log(`Дублирующееся сообщение: ${data.message}`);
+      return;
     }
 
     const messageDiv = document.createElement("div");
@@ -646,6 +681,10 @@ document.addEventListener("DOMContentLoaded", () => {
     // Сохраняем сообщение в кэш
     existingMessages.push(data);
     topicMessagesCache.set(data.topicId, existingMessages);
+
+    console.log(
+      `Добавлено сообщение: ${data.message} для темы ${data.topicId}`
+    );
   };
 
   const showLoginPage = () => {

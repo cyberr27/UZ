@@ -302,7 +302,6 @@ wss.on("connection", (ws, req) => {
 
             const topicMessage = new TopicMessage({
               topicId: messageData.topicId,
-              helmet: true,
               senderId: user.workerId,
               senderName: messageData.senderName,
               message: messageData.message,
@@ -310,7 +309,6 @@ wss.on("connection", (ws, req) => {
             });
             await topicMessage.save();
 
-            // Обновляем messageCount и uniqueUsersCount
             topic.messageCount += 1;
             const uniqueUsers = await TopicMessage.distinct("senderId", {
               topicId: messageData.topicId,
@@ -327,7 +325,6 @@ wss.on("connection", (ws, req) => {
               timestamp: messageData.timestamp,
             };
 
-            // Отправляем сообщение только подписанным клиентам
             clients.forEach((client, clientId) => {
               const subscriptions =
                 topicSubscriptions.get(clientId) || new Set();
@@ -336,6 +333,9 @@ wss.on("connection", (ws, req) => {
                 subscriptions.has(messageData.topicId)
               ) {
                 client.send(JSON.stringify(topicData));
+                console.log(
+                  `Отправлено сообщение в тему ${messageData.topicId} для клиента ${clientId}`
+                );
               }
             });
           }

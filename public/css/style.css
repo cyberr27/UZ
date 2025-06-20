@@ -585,6 +585,11 @@ input:focus {
   background: #fff;
   border-color: #e5e7eb;
   height: 62%;
+  overflow-y: auto;
+  padding: 10px;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
 }
 
 .topic-message {
@@ -592,6 +597,7 @@ input:focus {
   margin: 0.5rem 0;
   border-radius: 8px;
   max-width: 80%;
+  word-wrap: break-word;
 }
 
 .topic-message.sent {
