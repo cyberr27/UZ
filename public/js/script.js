@@ -476,13 +476,18 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   const openTopicChat = async (topicId, title) => {
+    console.log(`Открытие чата темы: topicId=${topicId}, title=${title}`);
     if (currentTopicId) {
       unsubscribeFromTopic(currentTopicId);
     }
     currentTopicId = topicId;
     subscribeToTopic(topicId);
-    document.getElementまま.getElementById("topic-chat-title").textContent =
-      title;
+    const topicChatTitle = document.getElementById("topic-chat-title");
+    if (topicChatTitle) {
+      topicChatTitle.textContent = title;
+    } else {
+      console.error("Элемент topic-chat-title не найден");
+    }
     document.getElementById("chat-container").classList.add("hidden");
     document.getElementById("topic-chat-container").classList.remove("hidden");
     document.getElementById("create-topic-container").classList.add("hidden");
