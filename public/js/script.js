@@ -203,35 +203,28 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
     ws.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      if (data.type === "message") {
-        displayMessage(data);
-      } else if (data.type === "private_message") {
-        displayPrivateMessage(data);
-      } else if (
-        data.type === "topic_message" &&
-        data.topicId === currentTopicId
-      ) {
-        displayTopicMessage(data);
-        // Уведомление о новых сообщениях
-        if (
-          document
-            .getElementById("topic-chat-container")
-            .classList.contains("hidden")
+      try {
+        const data = JSON.parse(event.data);
+        if (data.type === "message") {
+          displayMessage(data);
+        } else if (data.type === "private_message") {
+          displayPrivateMessage(data);
+        } else if (
+          data.type === "topic_message" &&
+          data.topicId === currentTopicId
         ) {
-          document.getElementById("chat-btn").textContent =
-            "Спілкування (Нові повідомлення)";
-          document
-            .getElementById("chat-btn")
-            .classList.add("bg-red-500", "hover:bg-red-600");
+          displayTopicMessage(data);
+        } else if (data.type === "error") {
+          alert(data.message);
         }
-      } else if (data.type === "error") {
-        alert(data.message);
+      } catch (error) {
+        console.error("Ошибка обработки WebSocket сообщения:", error);
       }
     };
 
     ws.onclose = () => {
       console.log("WebSocket отключен");
+      setTimeout(initWebSocket, 5000); // Переподключение через 5 секунд
     };
 
     ws.onerror = (error) => {
@@ -467,7 +460,7 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("chat-container").classList.add("hidden");
     document.getElementById("topic-chat-container").classList.remove("hidden");
     document.getElementById("create-topic-container").classList.add("hidden");
-    document.getElementById("profile-container")?.classList.add("hidden");
+    document.getElementById("profile")?.classList.add("hidden");
     document.getElementById("profile-edit-container").classList.add("hidden");
     document
       .getElementById("private-messages-container")
@@ -479,6 +472,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Загружаем сообщения
     await loadTopicMessages(topicId, 1);
+
+    // Сбрасываем уведомления о новых сообщениях
+    document.getElementById("chat-btn").textContent = "Спілкування";
+    document
+      .getElementById("chat-btn")
+      .classList.remove("bg-red-500", "hover:bg-red-600");
+    document
+      .getElementById("chat-btn")
+      .classList.add("bg-purple-500", "hover:bg-purple-600");
 
     // Уведомление о новых сообщениях
     const notifyNewMessages = () => {
@@ -492,38 +494,13 @@ document.addEventListener("DOMContentLoaded", () => {
         document
           .getElementById("chat-btn")
           .classList.add("bg-red-500", "hover:bg-red-600");
-      } else {
-        document.getElementById("chat-btn").textContent = "Спілкування";
         document
           .getElementById("chat-btn")
-          .classList.remove("bg-red-500", "hover:bg-red-600");
-        document
-          .getElementById("chat-btn")
-          .classList.add("bg-purple-500", "hover:bg-purple-600");
+          .classList.remove("bg-purple-500", "hover:bg-purple-600");
       }
     };
 
-    // Убедимся, что основной обработчик сообщений обрабатывает уведомления
-    if (ws && ws.readyState === WebSocket.OPEN) {
-      ws.onmessage = (event) => {
-        const data = JSON.parse(event.data);
-        if (data.type === "message") {
-          displayMessage(data);
-        } else if (data.type === "private_message") {
-          displayPrivateMessage(data);
-        } else if (
-          data.type === "topic_message" &&
-          data.topicId === currentTopicId
-        ) {
-          displayTopicMessage(data);
-          notifyNewMessages();
-        } else if (data.type === "error") {
-          alert(data.message);
-        }
-      };
-    }
-
-    // Убедимся, что основной обработчик сообщений обрабатывает уведомления
+    // Обновляем обработчик WebSocket
     if (ws && ws.readyState === WebSocket.OPEN) {
       ws.onmessage = (event) => {
         const data = JSON.parse(event.data);
@@ -583,9 +560,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
       const data = await response.json();
       if (response.ok) {
+        // Очищаем контейнер только если не добавляем новые сообщения
         if (!append) {
           topicMessages.innerHTML = "";
-          topicMessagesCache.delete(topicId); // Очищаем кэш перед загрузкой
+          topicMessagesCache.delete(topicId); // Очищаем кэш для новой загрузки
         }
 
         if (data.messages.length === 0) {
@@ -604,19 +582,30 @@ document.addEventListener("DOMContentLoaded", () => {
         const existingMessages = topicMessagesCache.get(topicId) || [];
         const newMessages = data.messages.map((msg) => ({
           ...msg,
-          messageId: msg._id, // Используем _id как messageId
+          messageId: msg._id,
         }));
+
+        // Фильтруем дубликаты
+        const uniqueNewMessages = newMessages.filter(
+          (newMsg) =>
+            !existingMessages.some(
+              (existingMsg) => existingMsg.messageId === newMsg.messageId
+            )
+        );
 
         topicMessagesCache.set(
           topicId,
-          append ? [...existingMessages, ...newMessages] : newMessages
+          append
+            ? [...existingMessages, ...uniqueNewMessages]
+            : uniqueNewMessages
         );
 
-        data.messages.forEach((msg) => {
+        // Отображаем сообщения в порядке от старых к новым
+        uniqueNewMessages.forEach((msg) => {
           displayTopicMessage({
             type: "topic_message",
             topicId: msg.topicId,
-            messageId: msg._id, // Добавляем messageId
+            messageId: msg._id,
             senderId: msg.senderId,
             senderName: msg.senderName,
             message: msg.message,
@@ -624,7 +613,10 @@ document.addEventListener("DOMContentLoaded", () => {
           });
         });
 
-        topicMessages.scrollTop = topicMessages.scrollHeight;
+        // Прокручиваем к последнему сообщению только при первой загрузке
+        if (!append) {
+          topicMessages.scrollTop = topicMessages.scrollHeight;
+        }
 
         if (data.total > page * 50) {
           loadMoreBtn.classList.remove("hidden");
@@ -634,7 +626,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         console.log(
-          `Загружено ${data.messages.length} сообщений для темы ${topicId}, страница ${page}`
+          `Загружено ${uniqueNewMessages.length} уникальных сообщений для темы ${topicId}, страница ${page}`
         );
       } else {
         alert(data.error || "Помилка завантаження повідомлень");
@@ -662,6 +654,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Проверяем дубликат по messageId
     const messageId = data.messageId;
+    if (!messageId) {
+      console.warn(`Сообщение без messageId в теме ${data.topicId}`);
+      return;
+    }
+
     const existingMessages = topicMessagesCache.get(data.topicId) || [];
     const isDuplicate = existingMessages.some(
       (msg) => msg.messageId === messageId
@@ -710,7 +707,7 @@ document.addEventListener("DOMContentLoaded", () => {
     topicMessages.appendChild(messageDiv);
     topicMessages.scrollTop = topicMessages.scrollHeight;
 
-    // Сохраняем сообщение в кэш с messageId
+    // Сохраняем сообщение в кэш
     existingMessages.push({ ...data, messageId });
     topicMessagesCache.set(data.topicId, existingMessages);
 
@@ -1355,22 +1352,19 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
       }
 
-      // Отправляем через WebSocket
-      if (ws && ws.readyState === WebSocket.OPEN) {
-        const topicData = {
-          type: "topic_message",
-          topicId: currentTopicId,
-          messageId: messageData.message._id, // Используем _id из ответа API
-          message,
-          senderId: currentUser.workerId,
-          senderName:
-            `${currentUser.firstName || ""} ${
-              currentUser.lastName || ""
-            }`.trim() || "Анонім",
-          timestamp: new Date().toISOString(),
-        };
-        ws.send(JSON.stringify(topicData));
-      }
+      // Отображаем сообщение локально, чтобы избежать задержки
+      displayTopicMessage({
+        type: "topic_message",
+        topicId: currentTopicId,
+        messageId: messageData.message._id,
+        message,
+        senderId: currentUser.workerId,
+        senderName:
+          `${currentUser.firstName || ""} ${
+            currentUser.lastName || ""
+          }`.trim() || "Анонім",
+        timestamp: new Date().toISOString(),
+      });
 
       topicChatInput.value = "";
     } catch (error) {

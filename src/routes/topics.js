@@ -146,6 +146,20 @@ router.post("/:topicId/messages", async (req, res) => {
       return res.status(403).json({ error: "Тема закрыта" });
     }
 
+    // Проверяем дубликат сообщения
+    const existingMessage = await TopicMessage.findOne({
+      topicId,
+      senderId: user.workerId,
+      message,
+      timestamp: { $gte: new Date(new Date(timestamp).getTime() - 1000) }, // Допуск 1 секунда
+    });
+    if (existingMessage) {
+      console.log(
+        `Дублирующееся сообщение в теме ${topicId} от ${user.workerId}`
+      );
+      return res.status(400).json({ error: "Сообщение уже существует" });
+    }
+
     const topicMessage = new TopicMessage({
       topicId,
       senderId: user.workerId,
