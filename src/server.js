@@ -21,6 +21,10 @@ dotenv.config();
 const app = express();
 const server = http.createServer(app);
 
+// Инициализируем topicSubscriptions как Map
+const topicSubscriptions = new Map(); // Добавляем эту строку
+const clients = new Map(); // Для хранения WebSocket-клиентов
+
 console.log("CLOUDINARY_URL:", process.env.CLOUDINARY_URL ? "Set" : "Not set");
 console.log("MONGO_URI:", process.env.MONGO_URI ? "Set" : "Not set");
 console.log("JWT_SECRET:", process.env.JWT_SECRET ? "Set" : "Not set");
