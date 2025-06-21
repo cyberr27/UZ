@@ -177,6 +177,36 @@ router.post("/:topicId/messages", async (req, res) => {
 
     console.log(`Сохранено сообщение ${savedMessage._id} в теме ${topicId}`);
 
+    // Отправляем сообщение через WebSocket
+    const topicData = {
+      type: "topic_message",
+      topicId: topicId,
+      messageId: savedMessage._id,
+      senderId: user.workerId,
+      senderName:
+        `${user.firstName || ""} ${user.lastName || ""}`.trim() || "Аноним",
+      message,
+      timestamp: savedMessage.timestamp,
+    };
+
+    const wss = req.app.get("wss"); // Получаем WebSocketServer из приложения
+    if (wss) {
+      wss.clients.forEach((client) => {
+        const subscriptions =
+          req.app.get("topicSubscriptions").get(client.userId) || new Set();
+        if (
+          client.readyState === WebSocket.OPEN &&
+          subscriptions.has(topicId) &&
+          client.userId !== user.workerId
+        ) {
+          client.send(JSON.stringify(topicData));
+          console.log(
+            `Отправлено сообщение ${savedMessage._id} в тему ${topicId} для клиента ${client.userId}`
+          );
+        }
+      });
+    }
+
     res.status(201).json({ message: savedMessage });
   } catch (error) {
     console.error(
@@ -214,7 +244,7 @@ router.get("/:topicId/messages", async (req, res) => {
     const skip = (page - 1) * limit;
 
     const messages = await TopicMessage.find({ topicId })
-      .sort({ timestamp: -1 }) // Сортировка от новых к старым
+      .sort({ timestamp: 1 }) // Сортировка от старых к новым
       .skip(skip)
       .limit(limit);
 

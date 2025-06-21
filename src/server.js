@@ -148,9 +148,8 @@ mongoose
   .catch((err) => console.error("MongoDB connection error:", err));
 
 const wss = new WebSocketServer({ server });
-
-const clients = new Map();
-const topicSubscriptions = new Map(); // Хранит подписки клиентов на темы
+app.set("wss", wss); // Делаем WebSocketServer доступным для маршрутов
+app.set("topicSubscriptions", topicSubscriptions); // Делаем topicSubscriptions доступным для маршрутов
 
 wss.on("connection", (ws, req) => {
   const urlParams = new URLSearchParams(req.url.split("?")[1]);
@@ -160,6 +159,7 @@ wss.on("connection", (ws, req) => {
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     userId = decoded.userId;
+    ws.userId = decoded.userId; // Сохраняем userId в объекте ws для идентификации клиента
   } catch (error) {
     console.error("WebSocket auth error:", error.message);
     ws.close(1008, "Invalid token");
@@ -215,7 +215,7 @@ wss.on("connection", (ws, req) => {
               message: messageData.message,
               timestamp: new Date().toISOString(),
             };
-            clients.forEach((client, clientId) => {
+            clients.forEach((client) => {
               if (client.readyState === client.OPEN) {
                 client.send(JSON.stringify(broadcastData));
               }
@@ -269,62 +269,8 @@ wss.on("connection", (ws, req) => {
             if (ws.readyState === ws.OPEN) {
               ws.send(JSON.stringify(privateData));
             }
-          } else if (messageData.type === "topic_message") {
-            if (messageData.message.length > 500) {
-              ws.send(
-                JSON.stringify({
-                  type: "error",
-                  message: "Сообщение слишком длинное (макс. 500 символов)",
-                })
-              );
-              return;
-            }
-            const topic = await Topic.findById(messageData.topicId);
-            if (!topic) {
-              ws.send(
-                JSON.stringify({
-                  type: "error",
-                  message: "Тема не найдена",
-                })
-              );
-              return;
-            }
-            if (topic.isClosed) {
-              ws.send(
-                JSON.stringify({
-                  type: "error",
-                  message: "Тема закрыта",
-                })
-              );
-              return;
-            }
-
-            // Сообщение уже сохранено через API, поэтому только рассылаем его
-            const topicData = {
-              type: "topic_message",
-              topicId: messageData.topicId,
-              messageId: messageData.messageId,
-              senderId: user.workerId,
-              senderName: messageData.senderName,
-              message: messageData.message,
-              timestamp: messageData.timestamp,
-            };
-
-            clients.forEach((client, clientId) => {
-              const subscriptions =
-                topicSubscriptions.get(clientId) || new Set();
-              if (
-                client.readyState === WebSocket.OPEN &&
-                subscriptions.has(messageData.topicId) &&
-                clientId !== user.workerId // Не отправляем отправителю
-              ) {
-                client.send(JSON.stringify(topicData));
-                console.log(
-                  `Отправлено сообщение ${messageData.messageId} в тему ${messageData.topicId} для клиента ${clientId}`
-                );
-              }
-            });
           }
+          // Сообщения в теме теперь обрабатываются через API
         } catch (error) {
           console.error("WebSocket message error:", error.message);
           ws.send(
