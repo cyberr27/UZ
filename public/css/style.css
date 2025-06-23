@@ -592,7 +592,7 @@ input:focus {
   flex-direction: column;
   gap: 8px;
   visibility: visible;
-  scroll-behavior: smooth; /* Плавная прокрутка */
+  scroll-behavior: smooth;
 }
 
 .topic-message {

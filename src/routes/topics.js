@@ -103,19 +103,31 @@ router.get("/:topicId/messages", async (req, res) => {
     jwt.verify(token, process.env.JWT_SECRET);
 
     const topicId = req.params.topicId;
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 50;
-    const skip = (page - 1) * limit;
+    console.log(`Загрузка всех сообщений для темы ${topicId}`);
 
-    const messages = await TopicMessage.find({ topicId })
-      .sort({ timestamp: 1 })
-      .skip(skip)
-      .limit(limit);
+    // Проверяем, существует ли тема
+    const topic = await Topic.findById(topicId);
+    if (!topic) {
+      console.error(`Тема ${topicId} не найдена`);
+      return res.status(404).json({ error: "Тема не найдена" });
+    }
 
-    const total = await TopicMessage.countDocuments({ topicId });
+    const messages = await TopicMessage.find({ topicId }).sort({
+      timestamp: 1,
+    });
 
-    res.json({ messages, total, page, limit });
+    const total = messages.length;
+
+    console.log(
+      `Найдено ${messages.length} сообщений для темы ${topicId}, всего: ${total}`
+    );
+
+    res.json({ messages, total });
   } catch (error) {
+    console.error(
+      `Ошибка загрузки сообщений для темы ${req.params.topicId}:`,
+      error
+    );
     if (error.name === "JsonWebTokenError")
       return res.status(401).json({ error: "Недействительный токен" });
     res.status(500).json({ error: "Ошибка сервера: " + error.message });

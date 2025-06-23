@@ -511,9 +511,8 @@ document.addEventListener("DOMContentLoaded", () => {
       .classList.add("bg-purple-500", "hover:bg-purple-600");
   };
 
-  const loadTopicMessages = async (topicId, page = 1, append = false) => {
+  const loadTopicMessages = async (topicId, append = false) => {
     const topicMessages = document.getElementById("topic-messages");
-    const loadMoreBtn = document.getElementById("load-more-topic-messages");
 
     if (!topicMessages) {
       console.error("Контейнер topic-messages не найден");
@@ -530,16 +529,13 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
       }
 
-      const response = await fetch(
-        `/api/topics/${topicId}/messages?page=${page}&limit=50`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const response = await fetch(`/api/topics/${topicId}/messages`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
       if (response.status === 401) {
         alert("Сессия завершена. Пожалуйста, войдите снова.");
@@ -550,24 +546,19 @@ document.addEventListener("DOMContentLoaded", () => {
 
       const data = await response.json();
       if (response.ok) {
-        // Очищаем контейнер только если это первая загрузка и кэш пустой
+        // Очищаем контейнер только если это первая загрузка
         const existingMessages = topicMessagesCache.get(topicId) || [];
-        if (!append && existingMessages.length === 0) {
+        if (!append) {
           topicMessages.innerHTML = "";
         }
 
-        if (
-          data.messages.length === 0 &&
-          !append &&
-          existingMessages.length === 0
-        ) {
+        if (data.messages.length === 0 && existingMessages.length === 0) {
           const noMessagesDiv = document.createElement("div");
           noMessagesDiv.textContent = "Сообщений в этой теме пока нет.";
           noMessagesDiv.style.color = "#666";
           noMessagesDiv.style.textAlign = "center";
           noMessagesDiv.style.padding = "10px";
           topicMessages.appendChild(noMessagesDiv);
-          loadMoreBtn.classList.add("hidden");
           console.log(`Нет сообщений для темы ${topicId}`);
           return;
         }
@@ -590,13 +581,13 @@ document.addEventListener("DOMContentLoaded", () => {
           topicId,
           append
             ? [...existingMessages, ...uniqueNewMessages]
-            : [...existingMessages, ...uniqueNewMessages]
+            : uniqueNewMessages
         );
 
         // Отображаем сообщения из кэша
         const allMessages = topicMessagesCache.get(topicId);
         if (!append) {
-          topicMessages.innerHTML = ""; // Очищаем только если не добавляем
+          topicMessages.innerHTML = "";
         }
 
         allMessages.forEach((msg) => {
@@ -611,20 +602,11 @@ document.addEventListener("DOMContentLoaded", () => {
           });
         });
 
-        // Прокручиваем к последнему сообщению только при первой загрузке
-        if (!append) {
-          topicMessages.scrollTop = topicMessages.scrollHeight;
-        }
-
-        if (data.total > page * 50) {
-          loadMoreBtn.classList.remove("hidden");
-          loadMoreBtn.dataset.nextPage = page + 1;
-        } else {
-          loadMoreBtn.classList.add("hidden");
-        }
+        // Прокручиваем к последнему сообщению
+        topicMessages.scrollTop = topicMessages.scrollHeight;
 
         console.log(
-          `Загружено ${uniqueNewMessages.length} новых сообщений для темы ${topicId}, всего в кэше: ${allMessages.length}`
+          `Загружено ${uniqueNewMessages.length} сообщений для темы ${topicId}, всего в кэше: ${allMessages.length}`
         );
       } else {
         alert(data.error || "Ошибка загрузки сообщений");
