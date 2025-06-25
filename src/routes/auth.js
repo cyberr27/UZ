@@ -98,8 +98,15 @@ router.put("/update", async (req, res) => {
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const { firstName, lastName, middleName, position, employeeId, photo } =
-      req.body;
+    const {
+      firstName,
+      lastName,
+      middleName,
+      position,
+      employeeId,
+      photo,
+      backgroundPhoto,
+    } = req.body;
 
     const user = await User.findByIdAndUpdate(
       decoded.userId,
@@ -110,6 +117,7 @@ router.put("/update", async (req, res) => {
         position: position || "",
         employeeId: employeeId || "",
         photo: photo || "",
+        backgroundPhoto: backgroundPhoto || "",
       },
       { new: true }
     );
@@ -128,6 +136,7 @@ router.put("/update", async (req, res) => {
         employeeId: user.employeeId,
         workerId: user.workerId,
         photo: user.photo,
+        backgroundPhoto: user.backgroundPhoto,
         likesCount: user.likesCount,
       },
     });
@@ -162,6 +171,7 @@ router.get("/me", async (req, res) => {
         employeeId: user.employeeId,
         workerId: user.workerId,
         photo: user.photo,
+        backgroundPhoto: user.backgroundPhoto,
         likesCount: user.likesCount,
       },
     });
@@ -198,6 +208,7 @@ router.get("/user/:workerId", async (req, res) => {
         employeeId: user.employeeId,
         workerId: user.workerId,
         photo: user.photo,
+        backgroundPhoto: user.backgroundPhoto,
         likesCount: user.likesCount,
       },
     });
@@ -208,5 +219,4 @@ router.get("/user/:workerId", async (req, res) => {
     res.status(500).json({ error: "Помилка сервера: " + error.message });
   }
 });
-
 module.exports = router;

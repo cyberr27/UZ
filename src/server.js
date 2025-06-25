@@ -136,6 +136,71 @@ app.post("/api/auth/upload-photo", async (req, res) => {
   }
 });
 
+app.post("/api/auth/upload-background-photo", async (req, res) => {
+  try {
+    const token = req.headers.authorization?.split(" ")[1];
+    if (!token) {
+      return res.status(401).json({ error: "Токен не надано" });
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    if (!req.files || !req.files.backgroundPhoto) {
+      return res.status(400).json({ error: "Файл не завантажено" });
+    }
+
+    const file = req.files.backgroundPhoto;
+    if (!file.mimetype.startsWith("image/")) {
+      return res.status(400).json({ error: "Тільки зображення дозволені!" });
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      // Ограничение 10MB для фона
+      return res
+        .status(400)
+        .json({ error: "Файл занадто великий (макс. 10MB)" });
+    }
+
+    const result = await new Promise((resolve, reject) => {
+      const uploadStream = cloudinary.uploader.upload_stream(
+        {
+          folder: "background_photos",
+          resource_type: "image",
+        },
+        (error, result) => {
+          if (error) reject(error);
+          else resolve(result);
+        }
+      );
+      uploadStream.end(file.data);
+    });
+
+    const backgroundPhotoUrl = result.secure_url;
+    const user = await User.findByIdAndUpdate(
+      decoded.userId,
+      { backgroundPhoto: backgroundPhotoUrl },
+      { new: true }
+    );
+
+    if (!user) {
+      return res.status(404).json({ error: "Користувача не знайдено" });
+    }
+
+    res.json({ backgroundPhotoUrl });
+  } catch (error) {
+    console.error(
+      "Помилка в /api/auth/upload-background-photo:",
+      error.message
+    );
+    if (error.name === "JsonWebTokenError") {
+      return res.status(401).json({ error: "Недійсний токен" });
+    }
+    res
+      .status(500)
+      .json({
+        error: "Помилка завантаження фонового зображення: " + error.message,
+      });
+  }
+});
+
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({ error: "Внутрішня помилка сервера" });

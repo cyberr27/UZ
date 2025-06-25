@@ -113,6 +113,14 @@ document.addEventListener("DOMContentLoaded", () => {
           profilePhoto.classList.add("hidden");
         }
 
+        if (data.user.backgroundPhoto) {
+          document.body.style.backgroundImage = `url('${
+            data.user.backgroundPhoto
+          }?t=${Date.now()}')`;
+        } else {
+          document.body.style.backgroundImage = `url('/img/uzImg.jpg')`; // Фон по умолчанию
+        }
+
         document.getElementById("edit-firstName").value =
           data.user.firstName || "";
         document.getElementById("edit-lastName").value =
@@ -934,8 +942,13 @@ document.addEventListener("DOMContentLoaded", () => {
     const position = document.getElementById("edit-position").value;
     const employeeId = document.getElementById("edit-employeeId").value;
     const photoInput = document.getElementById("edit-photo");
+    const backgroundPhotoInput = document.getElementById(
+      "edit-background-photo"
+    );
     let photo = null;
+    let backgroundPhoto = null;
 
+    // Загрузка фото профиля
     if (photoInput.files && photoInput.files[0]) {
       const formData = new FormData();
       formData.append("photo", photoInput.files[0]);
@@ -968,6 +981,42 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
 
+    // Загрузка фонового изображения
+    if (backgroundPhotoInput.files && backgroundPhotoInput.files[0]) {
+      const formData = new FormData();
+      formData.append("backgroundPhoto", backgroundPhotoInput.files[0]);
+
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) {
+          alert("Токен відсутній. Будь ласка, увійдіть знову.");
+          return;
+        }
+        const uploadResponse = await fetch(
+          "/api/auth/upload-background-photo",
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+            body: formData,
+          }
+        );
+        const uploadData = await uploadResponse.json();
+        if (uploadResponse.ok) {
+          backgroundPhoto = uploadData.backgroundPhotoUrl;
+          backgroundPhotoInput.value = "";
+        } else {
+          alert(uploadData.error || "Помилка завантаження фонового зображення");
+          return;
+        }
+      } catch (error) {
+        console.error("Помилка при завантаженні фонового зображення:", error);
+        alert("Помилка завантаження фонового зображення: " + error.message);
+        return;
+      }
+    }
+
     try {
       const token = localStorage.getItem("token");
       if (!token) {
@@ -987,6 +1036,7 @@ document.addEventListener("DOMContentLoaded", () => {
           position,
           employeeId,
           photo,
+          backgroundPhoto,
         }),
       });
       const data = await response.json();
@@ -1035,12 +1085,21 @@ document.addEventListener("DOMContentLoaded", () => {
           profilePhoto.classList.add("hidden");
         }
 
+        // Устанавливаем фоновое изображение
+        if (data.user.backgroundPhoto) {
+          document.body.style.backgroundImage = `url('${
+            data.user.backgroundPhoto
+          }?t=${Date.now()}')`;
+        } else {
+          document.body.style.backgroundImage = `url('/img/uzImg.jpg')`; // Фон по умолчанию
+        }
+
         profileEditContainer.classList.add("hidden");
         profileContainer.classList.remove("hidden");
         chatContainer.classList.add("hidden");
         privateMessagesContainer.classList.add("hidden");
         body.classList.add("profile-active");
-        setTimeout(generateQRCode, 0); // Генерируем QR-код после обновления профиля
+        setTimeout(generateQRCode, 0);
       } else {
         alert(data.error || "Помилка оновлення профілю");
       }

@@ -11,6 +11,7 @@ const userSchema = new mongoose.Schema({
   employeeId: { type: String, default: "" },
   workerId: { type: Number, unique: true },
   photo: { type: String, default: "" },
+  backgroundPhoto: { type: String, default: "" }, // Новое поле
   likesCount: { type: Number, default: 0 },
   ratings: [
     {

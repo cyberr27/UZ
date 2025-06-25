@@ -28,7 +28,8 @@
         Ваш QR - код :
       </h2>
       <div
-        id="qr-code-container"ф
+        id="qr-code-container"
+        ф
         class="profile-qr-code-container mt-4 ml-4"
       ></div>
       <h2 id="my-userProfileText" class="text-2xl font-bold mb-6 text-center">
@@ -142,6 +143,14 @@
               placeholder.textContent = initials || "НВ";
               placeholder.classList.remove("hidden");
               photo.classList.add("hidden");
+            }
+
+            if (user.backgroundPhoto) {
+              document.body.style.backgroundImage = `url('${
+                user.backgroundPhoto
+              }?t=${Date.now()}')`;
+            } else {
+              document.body.style.backgroundImage = `url('/img/uzImg.jpg')`; // Фон по умолчанию
             }
 
             const qrContainer = document.getElementById("qr-code-container");
