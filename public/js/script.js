@@ -118,7 +118,7 @@ document.addEventListener("DOMContentLoaded", () => {
             data.user.backgroundPhoto
           }?t=${Date.now()}')`;
         } else {
-          document.body.style.backgroundImage = `url('/img/uzImg.jpg')`; // Фон по умолчанию
+          document.body.style.background = `white`; // Фон по умолчанию
         }
 
         document.getElementById("edit-firstName").value =
