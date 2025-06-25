@@ -118,7 +118,7 @@ document.addEventListener("DOMContentLoaded", () => {
             data.user.backgroundPhoto
           }?t=${Date.now()}')`;
         } else {
-          document.body.style.background = `white`; // Фон по умолчанию
+          document.body.style.background = `url('/img/uzImg.jpg')`; // Фон по умолчанию
         }
 
         document.getElementById("edit-firstName").value =
@@ -506,8 +506,8 @@ document.addEventListener("DOMContentLoaded", () => {
       .classList.add("hidden");
     document.body.classList.add("profile-active");
 
-    // Загружаем сообщения
-    await loadTopicMessages(topicId, 1);
+    // Загружаем все сообщения
+    await loadTopicMessages(topicId);
 
     // Сбрасываем уведомления о новых сообщениях
     document.getElementById("chat-btn").textContent = "Спілкування";
@@ -519,12 +519,12 @@ document.addEventListener("DOMContentLoaded", () => {
       .classList.add("bg-purple-500", "hover:bg-purple-600");
   };
 
-  const loadTopicMessages = async (topicId, append = false) => {
+  const loadTopicMessages = async (topicId) => {
     const topicMessages = document.getElementById("topic-messages");
 
     if (!topicMessages) {
       console.error("Контейнер topic-messages не найден");
-      alert("Ошибка: контейнер для сообщений темы не найден");
+      alert("Ошибка: Контейнер для сообщений темы не найден");
       return;
     }
 
@@ -532,7 +532,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const token = localStorage.getItem("token");
       if (!token) {
         alert("Токен отсутствует. Пожалуйста, войдите снова.");
-        localStorage.removeItem("token");
+        localStorage.removeEventListener("token");
         showLoginPage();
         return;
       }
@@ -554,13 +554,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
       const data = await response.json();
       if (response.ok) {
-        // Очищаем контейнер только если это первая загрузка
-        const existingMessages = topicMessagesCache.get(topicId) || [];
-        if (!append) {
-          topicMessages.innerHTML = "";
-        }
+        // Очищаем контейнер и кэш сообщений
+        topicMessages.innerHTML = "";
+        topicMessagesCache.set(topicId, []);
 
-        if (data.messages.length === 0 && existingMessages.length === 0) {
+        if (data.messages.length === 0) {
           const noMessagesDiv = document.createElement("div");
           noMessagesDiv.textContent = "Сообщений в этой теме пока нет.";
           noMessagesDiv.style.color = "#666";
@@ -571,34 +569,15 @@ document.addEventListener("DOMContentLoaded", () => {
           return;
         }
 
-        // Фильтруем новые сообщения, чтобы избежать дубликатов
+        // Сохраняем сообщения в кэш
         const newMessages = data.messages.map((msg) => ({
           ...msg,
           messageId: msg._id,
         }));
+        topicMessagesCache.set(topicId, newMessages);
 
-        const uniqueNewMessages = newMessages.filter(
-          (newMsg) =>
-            !existingMessages.some(
-              (existingMsg) => existingMsg.messageId === newMsg.messageId
-            )
-        );
-
-        // Обновляем кэш
-        topicMessagesCache.set(
-          topicId,
-          append
-            ? [...existingMessages, ...uniqueNewMessages]
-            : uniqueNewMessages
-        );
-
-        // Отображаем сообщения из кэша
-        const allMessages = topicMessagesCache.get(topicId);
-        if (!append) {
-          topicMessages.innerHTML = "";
-        }
-
-        allMessages.forEach((msg) => {
+        // Отображаем все сообщения
+        newMessages.forEach((msg) => {
           displayTopicMessage({
             type: "topic_message",
             topicId: msg.topicId,
@@ -614,7 +593,7 @@ document.addEventListener("DOMContentLoaded", () => {
         topicMessages.scrollTop = topicMessages.scrollHeight;
 
         console.log(
-          `Загружено ${uniqueNewMessages.length} сообщений для темы ${topicId}, всего в кэше: ${allMessages.length}`
+          `Загружено ${newMessages.length} сообщений для темы ${topicId}`
         );
       } else {
         alert(data.error || "Ошибка загрузки сообщений");
@@ -1439,15 +1418,4 @@ document.addEventListener("DOMContentLoaded", () => {
     body.classList.add("profile-active");
     currentTopicId = null;
   });
-
-  document
-    .getElementById("load-more-topic-messages")
-    .addEventListener("click", () => {
-      const nextPage = parseInt(
-        document.getElementById("load-more-topic-messages").dataset.nextPage
-      );
-      if (currentTopicId && nextPage) {
-        loadTopicMessages(currentTopicId, nextPage, true);
-      }
-    });
 });

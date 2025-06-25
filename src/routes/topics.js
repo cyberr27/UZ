@@ -112,6 +112,7 @@ router.get("/:topicId/messages", async (req, res) => {
       return res.status(404).json({ error: "Тема не найдена" });
     }
 
+    // Загружаем все сообщения
     const messages = await TopicMessage.find({ topicId }).sort({
       timestamp: 1,
     });
